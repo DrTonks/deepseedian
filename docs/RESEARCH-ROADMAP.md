@@ -2,9 +2,9 @@
 
 同库长期记忆已细化为 [技术设计与 M0–M3 验收契约](MEMORY-DESIGN.md)。0.4.0 实现手动记忆/规则编辑、事务保护和本地索引整理；自动召回、模型提炼和闲时调度仍未实现。下文保留调研与方案演进。
 
-调研日期：2026-09-13。基线：Deepsidian 0.3.1、已安装 DSH 0.1.5-rc.2、Obsidian API 类型包 1.13.1。
+调研日期：2026-09-13。基线：Deepseedian 0.3.1、已安装 DSH 0.1.5-rc.2、Obsidian API 类型包 1.13.1。
 
-本报告依据上游 README、官方规范与本机已安装包的接口；没有逐一安装竞品，也不是性能排名。下文“上游已有”不代表 Deepsidian 已接入，“建议”均为待实现设计。具体实现前应锁定上游 commit / 版本重新核对。当前能力以 [README](../README.md) 为准。
+本报告依据上游 README、官方规范与本机已安装包的接口；没有逐一安装竞品，也不是性能排名。下文“上游已有”不代表 Deepseedian 已接入，“建议”均为待实现设计。具体实现前应锁定上游 commit / 版本重新核对。当前能力以 [README](../README.md) 为准。
 
 ## 1. 推荐方向
 
@@ -14,7 +14,7 @@
 
 ## 2. 同类项目：借鉴什么
 
-| 项目及一手依据 | 上游目前公开的能力 | 对 Deepsidian 的建议 | 接入判断 |
+| 项目及一手依据 | 上游目前公开的能力 | 对 Deepseedian 的建议 | 接入判断 |
 | --- | --- | --- | --- |
 | [Claudian](https://github.com/YishenTu/claudian) | 多种 coding agent、选区内编辑及词级 diff、文件 mention、命令/skills、MCP、多会话标签页 | 借鉴紧凑输入、局部编辑预览、持久会话导航；不恢复整篇回答插入按钮或常驻提示词按钮 | 交互可独立实现；CLI 适配层不直接等于 DSH 适配层 |
 | [Copilot V4](https://github.com/logancyang/obsidian-copilot) | 已是 agent 产品；项目上下文、Skills/Commands、选区 Quick Ask，另有轻量 Quick Chat | 借鉴主题级上下文集合，以及“轻量问答 / 多步 agent”两条请求路径 | 不再把它归类成只有 RAG 的聊天框；项目能力不必附带第二套账号系统 |
@@ -28,7 +28,7 @@ Claudian README 提到的 **Tabs 是会话标签页**，不是证明已有“Tab
 
 ### ThoughtDAG 的三个合作层次
 
-1. **近期：协议参考。** 将一次回答与 `sessionId + 完成轮次/事件边界` 对应，保留笔记片段来源；Deepsidian 用自己的 ItemView 和 Obsidian 文件交互。
+1. **近期：协议参考。** 将一次回答与 `sessionId + 完成轮次/事件边界` 对应，保留笔记片段来源；Deepseedian 用自己的 ItemView 和 Obsidian 文件交互。
 2. **中期：数据互通实验。** 使用合成会话验证导入/导出，区分只读镜像与可执行节点；双方使用各自可验证的接口，避免同时写同一份运行日志。
 3. **远期：可选画布适配器。** 评估抽离上下文编译器或承载完整 Web 视图的成本。其现有实现依赖 Web 服务器、前端注入和同源 iframe；本项目独立 SDK 进程没有这套宿主。直接嵌入会额外承担主题、焦点、附件、授权和进程管理成本。
 
@@ -58,7 +58,7 @@ Claudian README 提到的 **Tabs 是会话标签页**，不是证明已有“Tab
 
 ### DSH 侧：工具、服务和 UI 功能要分清
 
-以下依据**本机 0.1.5-rc.2 包内 README 与类型**，对应源码集中在 [DSH 官方仓库](https://github.com/deepseek-ai/deepseek-harness)。这些包存在不代表已加载进 Deepsidian 的精简 composition。
+以下依据**本机 0.1.5-rc.2 包内 README 与类型**，对应源码集中在 [DSH 官方仓库](https://github.com/deepseek-ai/deepseek-harness)。这些包存在不代表已加载进 Deepseedian 的精简 composition。
 
 | 能力 / 包 | 当前证据与拟用方式 | 需要补齐 |
 | --- | --- | --- |
@@ -111,9 +111,9 @@ flowchart LR
 
 [JSON Canvas 1.0](https://jsoncanvas.org/spec/1.0/) 定义 text/file/link/group 节点及边，文件节点可含 subpath。因此可以先导出“原笔记文件卡 + 支线摘要文本卡 + 来源边”，继续在 Obsidian 手动编辑。
 
-第一阶段仅导出到用户指定的新 `.canvas`；第二阶段才增量同步，并通过 sidecar 保存 Deepsidian 绑定数据，保留用户节点、连线和布局。格式兼容不意味着内置视图会运行 agent，也不意味着原生关系图谱自动显示聊天节点。不要为此给每轮对话生成一篇 Markdown，污染真实知识图。
+第一阶段仅导出到用户指定的新 `.canvas`；第二阶段才增量同步，并通过 sidecar 保存 Deepseedian 绑定数据，保留用户节点、连线和布局。格式兼容不意味着内置视图会运行 agent，也不意味着原生关系图谱自动显示聊天节点。不要为此给每轮对话生成一篇 Markdown，污染真实知识图。
 
-原生关系图谱继续负责发现笔记关联；Deepsidian 通过 metadataCache 使用相同的链接数据。实时高亮内置图谱、Canvas 节点上的运行按钮、拖线立即执行，均放入独立可关闭的后期实验，不把内部 API 作为基础依赖。
+原生关系图谱继续负责发现笔记关联；Deepseedian 通过 metadataCache 使用相同的链接数据。实时高亮内置图谱、Canvas 节点上的运行按钮、拖线立即执行，均放入独立可关闭的后期实验，不把内部 API 作为基础依赖。
 
 ### 缓存策略
 
@@ -166,7 +166,7 @@ S/M/L 表示相对复杂度，不是日历承诺。P0/P1 是下一轮主线；P2
 
 ## 8. 长期记忆（2026-09-13 补充）
 
-当前实际组合是 `sdk-minimal` 加 Deepsidian patch。已安装 DSH 0.1.5-rc.2 的该 profile 用 `dsh-session-persistence-jsonl` 保存会话；桥接通过 sessionPersistence.stat 和 agents.resume 恢复同一 ID。它没有默认加载 workspace instructions、skills 或 compaction，本项目也没有加入记忆后端或 MCP。复用 ~/.dsh 的供应商配置不等于继承 Web profile 的扩展。
+当前实际组合是 `sdk-minimal` 加 Deepseedian patch。已安装 DSH 0.1.5-rc.2 的该 profile 用 `dsh-session-persistence-jsonl` 保存会话；桥接通过 sessionPersistence.stat 和 agents.resume 恢复同一 ID。它没有默认加载 workspace instructions、skills 或 compaction，本项目也没有加入记忆后端或 MCP。复用 ~/.dsh 的供应商配置不等于继承 Web profile 的扩展。
 
 0.3.1 有同会话持久历史、手动 background 和笔记检索。0.3.2 移除学习背景输入及其后续注入；旧值仍保留在 data.json，不自动删除或改成新记忆。旧聊天已经收到的背景也不会被改写。当前没有新会话自动召回、自动提炼偏好、主题进度档案或向量记忆。磁盘日志保存完整不等于模型每次都能处理无限历史；长会话仍需要上下文预算与压缩策略。
 
@@ -198,7 +198,7 @@ S/M/L 表示相对复杂度，不是日历承诺。P0/P1 是下一轮主线；P2
 建议放在当前库的插件数据目录，不写进普通笔记，不使用全局 ~/.dsh 记忆库：
 
 ```text
-<vault>/.obsidian/plugins/deepsidian/memory/
+<vault>/.obsidian/plugins/deepseedian/memory/
   rules.md           # 用户可编辑的整理说明；模型无权修改
   policy.json        # 程序校验的开关、预算、排除范围、保留策略
   items.json         # 结构化记忆的唯一权威版本
@@ -309,7 +309,7 @@ Claude Code 区分用户写的 CLAUDE.md 与自动记忆，后者有简短 MEMOR
 
 磁盘文件修改本身不改变远端 KV；实际请求前缀变化才影响复用。DeepSeek 当前文档还要求完整命中已持久化的前缀单元，所以即使两次输入有相同开头，也不能保证立刻命中该部分。设计需要记录实际 hit/miss usage。[DeepSeek 缓存规则](https://api-docs.deepseek.com/guides/kv_cache/)
 
-Deepsidian 拟采用：
+Deepseedian 拟采用：
 
 - 稳定角色和工具定义放在前部，不嵌入整库记忆、更新时间或全局 revision。
 - 会话记忆保存不可变快照；后台整理只改变记忆库，不重写活跃会话早期消息。
@@ -322,10 +322,10 @@ Deepsidian 拟采用：
 
 ### 9.7 Claude 风格首版：Markdown 记忆、短索引、按需读取
 
-2026-09-13 进一步收敛：借鉴 Claude 的规则/自动记忆分离与按需主题读取，优先选择用户容易检查的 Markdown。其文件式设计见 [官方记忆说明](https://code.claude.com/docs/en/memory)。以下目录、预算、工具与后台整理规则是 Deepsidian 的设计，不是 Claude 内部实现说明。
+2026-09-13 进一步收敛：借鉴 Claude 的规则/自动记忆分离与按需主题读取，优先选择用户容易检查的 Markdown。其文件式设计见 [官方记忆说明](https://code.claude.com/docs/en/memory)。以下目录、预算、工具与后台整理规则是 Deepseedian 的设计，不是 Claude 内部实现说明。
 
 ```text
-<vault>/.obsidian/plugins/deepsidian/memory/
+<vault>/.obsidian/plugins/deepseedian/memory/
   RULES.md              # 用户可编辑的整理规则，含默认值
   MEMORY.md             # 自动维护的短索引与少量稳定偏好
   topics/               # 仅在有足够内容时创建主题文件
@@ -546,4 +546,8 @@ main 已包含默认关闭的手动补全实验。社区发布前优先解决安
 
 ### 0.6.6 公开构建批准（2026-09-26）
 
-显示名称已确定为 Deepseedian，仓库更名为 DrTonks/deepseedian，保留 deepsidian 数据 ID。维护者已批准推送当前版本并创建公开 GitHub Release，暂不提交社区目录；最终本地复验为158项离线、16项集成全部通过且无跳过。后续优先完成社区审核与新用户安装反馈，再推进检索质量评测；不扩大已有文章外发范围。
+当时显示名称已确定为 Deepseedian，仓库更名为 DrTonks/deepseedian，保留旧 `deepsidian` 数据 ID。维护者当时已批准推送并创建公开 GitHub Release，暂不提交社区目录；最终本地复验为158项离线、16项集成全部通过且无跳过。后续优先完成社区审核与新用户安装反馈，再推进检索质量评测；不扩大已有文章外发范围。
+
+### 0.7.3 名称统一（2026-09-27，待发布）
+
+插件 ID、安装目录及内部协议统一为 `deepseedian`，补旧数据与图片迁移、旧记忆/导航兼容及 Windows 回归。实机验收交由维护者执行，详见 [本轮验收步骤](VALIDATION-0.7.3.md)。下一步先完成社区条目 ID 协调和跨平台安装验收，再推进检索质量评测；本轮没有推送或发布授权动作。

@@ -121,13 +121,13 @@ M2手动模型提案基础流程已实现，详见下节；M3闲时整理仍待�
 
 ````markdown
 ---
-schema: deepsidian-memory-topic-v1
+schema: deepseedian-memory-topic-v1
 topicId: agent-runtime
 title: Agent 运行时
 ---
 
 ## 解释偏好
-<!-- deepsidian-memory {"id":"m_example","kind":"preference","status":"active","evidence":"user-explicit","locked":false,"sources":[{"sessionId":"s_example","endSeq":42}],"supersedes":[]} -->
+<!-- deepseedian-memory {"id":"m_example","kind":"preference","status":"active","evidence":"user-explicit","locked":false,"sources":[{"sessionId":"s_example","endSeq":42}],"supersedes":[]} -->
 用户熟悉前端，希望首次出现的 agent 术语配简短解释。
 ````
 

@@ -1,10 +1,10 @@
 import {Modal,Notice} from 'obsidian';
-import type Deepsidian from './main';
+import type Deepseedian from './main';
 import type {LearningView} from './view';
 
 export class ComposerContextModal extends Modal {
   private chatId:string;
-  constructor(private plugin:Deepsidian,private view:LearningView){super(plugin.app);this.chatId=plugin.chat!.id;}
+  constructor(private plugin:Deepseedian,private view:LearningView){super(plugin.app);this.chatId=plugin.chat!.id;}
   onOpen(){this.draw();}
   private draw(){
     if(this.plugin.chat?.id!==this.chatId){this.close();return;}

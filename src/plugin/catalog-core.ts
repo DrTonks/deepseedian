@@ -75,26 +75,32 @@ export function buildCatalog(articles:CatalogArticle[],source:string,output:stri
   return {base,navigation:managedNavigation(navigation,source,entries),count:rows.length,missing,entries};
 }
 
-const START='<!-- deepsidian-catalog:v1:';
-const END='<!-- /deepsidian-catalog -->';
+const START='<!-- deepseedian-catalog:v1:';
+const END='<!-- /deepseedian-catalog -->';
+// Older releases used these markers; accept them only as a complete, unique pair.
+const LEGACY_START='<!-- deepsidian-catalog:v1:';
+const LEGACY_END='<!-- /deepsidian-catalog -->';
 const digest=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 function managedNavigation(body:string,source:string,entries:CatalogEntry[]):string {
   const state={source,entries,hash:digest({source,entries,body})};
   return `${START}${Buffer.from(JSON.stringify(state)).toString('base64')} -->\n${body}${END}\n`;
 }
 export function readNavigation(text:string) {
-  const start=text.indexOf(START),end=text.indexOf(END);
-  if(start<0||end<start||text.indexOf(START,start+1)>=0||text.indexOf(END,end+1)>=0)throw Error('导航缺少唯一的生成记录（旧版或手写文件），请保留原文件并选择新输出目录');
+  const starts=[...text.matchAll(/<!-- (?:deepseedian|deepsidian)-catalog:v1:/g)];
+  const ends=[...text.matchAll(/<!-- \/(?:deepseedian|deepsidian)-catalog -->/g)];
+  const marker=starts[0]?.[0],closing=marker===START?END:LEGACY_END;
+  const start=starts[0]?.index??-1,end=ends[0]?.index??-1;
+  if(starts.length!==1||ends.length!==1||end<start||ends[0]?.[0]!==closing)throw Error('导航缺少唯一的生成记录（旧版或手写文件），请保留原文件并选择新输出目录');
   const header=/ -->\r?\n/.exec(text.slice(start));
   const headerEnd=header?start+header.index:-1;
   if(!header||headerEnd>end)throw Error('导航生成记录损坏，请保留原文件');
   let state:{source:string;entries:CatalogEntry[];hash:string};
-  try {state=JSON.parse(Buffer.from(text.slice(start+START.length,headerEnd),'base64').toString('utf8'));}catch{throw Error('导航生成记录损坏，请保留原文件');}
+  try {state=JSON.parse(Buffer.from(text.slice(start+(marker===START?START:LEGACY_START).length,headerEnd),'base64').toString('utf8'));}catch{throw Error('导航生成记录损坏，请保留原文件');}
   const body=text.slice(headerEnd+header[0].length,end);
   // Editors and Git may change line endings without changing the generated content.
   const canonicalBody=body.replace(/\r\n/g,'\n');
   if(typeof state.source!=='string'||!Array.isArray(state.entries)||state.entries.length>CATALOG_LIMIT||state.hash!==digest({source:state.source,entries:state.entries,body:canonicalBody}))throw Error('生成区域已被编辑或记录损坏；不会覆盖，请保留修改并使用新输出目录');
-  return {source:state.source,entries:state.entries,start,end:end+END.length,body,lineEnding:header[0].endsWith('\r\n')?'\r\n':'\n'};
+  return {source:state.source,entries:state.entries,start,end:end+closing.length,body,lineEnding:header[0].endsWith('\r\n')?'\r\n':'\n'};
 }
 export function navigationUpdate(previous:string,plan:CatalogPlan,source:string) {
   const old=readNavigation(previous),next=readNavigation(plan.navigation);

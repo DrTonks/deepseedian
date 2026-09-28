@@ -31,7 +31,7 @@ test('unacknowledged completion cancellation exposes recovery state without rele
   const rejected = assert.rejects(pending, /取消/);
   await Promise.resolve();
   controller.abort(); await rejected;
-  assert.equal(frames.at(-1).method, 'deepsidian/completion-cancel');
+  assert.equal(frames.at(-1).method, 'deepseedian/completion-cancel');
   assert.equal(client.completionActive, true);
   assert.equal(client.completionStalled, false);
   internals.completion.cancelledAt = Date.now() - 15001;
@@ -65,7 +65,7 @@ test('completion bridge rejects non-success terminals and keeps slot during canc
   const bridge = completionBridge(ctx, (value: unknown) => value, (id: string, value: unknown) => replies.push({ id, value }));
   for (const scenario of ['stop', 'error', 'aborted', 'max-tokens', 'missing', 'empty', 'marker']) {
     mode = scenario;
-    bridge.handle({ method: 'deepsidian/completion', params: { requestId: scenario, input } });
+    bridge.handle({ method: 'deepseedian/completion', params: { requestId: scenario, input } });
     await pause(0);
     const response = replies.at(-1).value;
     if (scenario === 'stop') assert.equal(response.result.text, '候选');
@@ -73,10 +73,10 @@ test('completion bridge rejects non-success terminals and keeps slot during canc
     else assert.ok(response.error, scenario);
   }
   mode = 'hold';
-  bridge.handle({ method: 'deepsidian/completion', params: { requestId: 'held', input } });
+  bridge.handle({ method: 'deepseedian/completion', params: { requestId: 'held', input } });
   await pause(0);
-  bridge.handle({ method: 'deepsidian/completion-cancel', params: { requestId: 'held' } });
-  bridge.handle({ method: 'deepsidian/completion', params: { requestId: 'replacement', input } });
+  bridge.handle({ method: 'deepseedian/completion-cancel', params: { requestId: 'held' } });
+  bridge.handle({ method: 'deepseedian/completion', params: { requestId: 'replacement', input } });
   assert.ok(replies.at(-1).value.error);
   assert.equal(replies.some(r => r.id === 'held'), false);
   release(); await pause(0);
@@ -93,7 +93,7 @@ test('completion JSON preserves spaces and quotes and rejects malformed envelope
   }})}};
   let respond!:(value:any)=>void;
   const bridge=completionBridge(ctx,(value:unknown)=>value,(_id:string,value:unknown)=>respond(value));
-  const call=async(value:string)=>{raw=value;const done=new Promise<any>(resolve=>{respond=resolve;});bridge.handle({method:'deepsidian/completion',params:{requestId:'test',input}});return done;};
+  const call=async(value:string)=>{raw=value;const done=new Promise<any>(resolve=>{respond=resolve;});bridge.handle({method:'deepseedian/completion',params:{requestId:'test',input}});return done;};
   for(const text of [' inserted ', 'quote "value" and \\ path', '', '  ']){
     const result=await call(JSON.stringify({text}));assert.equal(result.result.text,text.trim()?text:'');
   }

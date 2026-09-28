@@ -58,7 +58,7 @@ macOS 需要实机验证上述项目；Windows 原生中文 IME、Ctrl+Z 与 CRL
 
 ## 构建、安装与回退
 
-实验构建沿用 `deepsidian` 插件 ID，同一个库只安装一个版本；稳定版与实验版对照使用两个隔离库。实验只增加设置，不应迁移或重写聊天数据格式。安装说明应标注准确提交、实验版本及验证过的 DSH 版本。
+实验构建沿用 `deepseedian` 插件 ID，同一个库只安装一个版本；稳定版与实验版对照使用两个隔离库。实验只增加设置，不应迁移或重写聊天数据格式。安装说明应标注准确提交、实验版本及验证过的 DSH 版本。
 
 在指定实验提交上安装依赖、检查并重新构建，然后再安装，避免复用旧 `dist`：
 
@@ -98,7 +98,7 @@ npm run install:dev -- "你的隔离测试库路径"
 
 ### 可安装实验产物
 
-运行 `npm run package:experimental` 会重新构建，生成 `dist/tab-preview-<提交号>[-working]-<时间戳>/deepsidian/`。只包含程序文件和 EXPERIMENT.txt，不包含凭证、data.json、个人笔记或运行时历史。将该目录中的文件复制到隔离库 `.obsidian/plugins/deepsidian/`，启用后按本页说明测试。
+运行 `npm run package:experimental` 会重新构建，生成 `dist/tab-preview-<提交号>[-working]-<时间戳>/deepseedian/`。只包含程序文件和 EXPERIMENT.txt，不包含凭证、data.json、个人笔记或运行时历史。将该目录中的文件复制到隔离库 `.obsidian/plugins/deepseedian/`，启用后按本页说明测试。
 
 ## 发布后复审与分支命名
 

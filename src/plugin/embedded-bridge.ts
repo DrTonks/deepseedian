@@ -3,14 +3,14 @@ import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 // Replaced with the statically bundled bridge by scripts/build.mjs. No code is downloaded.
-declare const __DEEPSIDIAN_BRIDGE_SOURCE__: string;
+declare const __DEEPSEEDIAN_BRIDGE_SOURCE__: string;
 
 /** Community installs contain only main.js, manifest.json and styles.css. */
 export async function embeddedBridgePath(runtimeHome: string): Promise<string> {
-  if (typeof __DEEPSIDIAN_BRIDGE_SOURCE__ !== 'string' || !__DEEPSIDIAN_BRIDGE_SOURCE__) {
+  if (typeof __DEEPSEEDIAN_BRIDGE_SOURCE__ !== 'string' || !__DEEPSEEDIAN_BRIDGE_SOURCE__) {
     throw Error('插件构建缺少内置 DSH 桥接，请重新安装完整发行版');
   }
-  const source = __DEEPSIDIAN_BRIDGE_SOURCE__;
+  const source = __DEEPSEEDIAN_BRIDGE_SOURCE__;
   const hash = createHash('sha256').update(source).digest('hex');
   const destination = join(runtimeHome, `bridge-${hash}.mjs`);
   await mkdir(runtimeHome, { recursive: true });

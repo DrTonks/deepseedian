@@ -6,12 +6,12 @@ import {resolve,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 await mkdir('.runs',{recursive:true});const dir=await mkdtemp(resolve('.runs/host-test-'));
 const outfile=join(dir,'host.mjs');
-await build({stdin:{contents:"export {default} from './src/plugin/main.ts'; export {DshClient} from './src/plugin/dsh.ts'; export {FileSystemAdapter,MarkdownView} from 'obsidian';",resolveDir:process.cwd()},outfile,bundle:true,platform:'node',format:'esm',define:{__DEEPSIDIAN_BRIDGE_SOURCE__:JSON.stringify('// Synthetic host fixture; DshClient is mocked in this test.')},alias:{obsidian:resolve('tests/host-obsidian.ts')}});
+await build({stdin:{contents:"export {default} from './src/plugin/main.ts'; export {DshClient} from './src/plugin/dsh.ts'; export {FileSystemAdapter,MarkdownView} from 'obsidian';",resolveDir:process.cwd()},outfile,bundle:true,platform:'node',format:'esm',define:{__DEEPSEEDIAN_BRIDGE_SOURCE__:JSON.stringify('// Synthetic host fixture; DshClient is mocked in this test.')},alias:{obsidian:resolve('tests/host-obsidian.ts')}});
 const {default:Base,DshClient,FileSystemAdapter,MarkdownView}=await import(pathToFileURL(outfile).href);
-class Deepsidian extends Base { constructor(){super();this.state.settings.useMemory=false;this.app.workspace.getActiveViewOfType=()=>null;} }
+class Deepseedian extends Base { constructor(){super();this.state.settings.useMemory=false;this.app.workspace.getActiveViewOfType=()=>null;} }
 
 test('knowledge output respects per-result/turn budgets and cancelled or replaced turns',async()=>{
-  const p=new Deepsidian();p.busy=true;p.activeMessage={};
+  const p=new Deepseedian();p.busy=true;p.activeMessage={};
   p.toolResult=async()=>({text:'x'.repeat(23000)});
   await p.handleTool('obsidian_query',{});await p.handleTool('obsidian_query',{});
   await assert.rejects(()=>p.handleTool('obsidian_query',{}),/预算不足/);
@@ -27,7 +27,7 @@ test('knowledge output respects per-result/turn budgets and cancelled or replace
 });
 
 test('AI memory settings preserve explicit opt-out; failed save rolls back and busy changes are rejected',async()=>{
-  const p=new Deepsidian();p.state.settings.manageMemory=false;assert.equal(p.state.settings.manageMemory,false);
+  const p=new Deepseedian();p.state.settings.manageMemory=false;assert.equal(p.state.settings.manageMemory,false);
   let stops=0;p.disconnect=async()=>{stops++;};p.saveData=async()=>{throw Error('disk full');};
   await assert.rejects(()=>p.setManageMemory(true),/disk full/);
   assert.equal(p.state.settings.manageMemory,false);assert.equal(p.busy,false);assert.equal(stops,1);
@@ -41,7 +41,7 @@ test('foreground agent manages real memory, reads the updated snapshot, and cann
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');
   const {sourceKey}=await import('../src/plugin/memory/proposals.ts');
   const store=new MemoryStore(join(await mkdtemp(resolve('.runs/manage-host-')),'memory'));
-  const p=new Deepsidian();p.state.settings.useMemory=true;p.state.settings.manageMemory=true;
+  const p=new Deepseedian();p.state.settings.useMemory=true;p.state.settings.manageMemory=true;
   p.state.chats=[{id:'synthetic',title:'synthetic',messages:[]}];p.state.activeId='synthetic';p.capture=()=>{};p.memory=()=>store;
   let id='';let checked=false;const question='请记住，解释先给定义。';
   p.connect=async()=>({options:{model:'test'},prompt:async(_id:string,prompt:string)=>{
@@ -61,7 +61,7 @@ test('host rejects memory writes when management, reads, or chat contribution is
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');
   for(const disabled of ['management','reads','chat-reads','contribution']) {
     const store=new MemoryStore(join(await mkdtemp(resolve('.runs/manage-disabled-')),'memory'));
-    const p=new Deepsidian();p.state.settings.useMemory=disabled!=='reads';p.state.settings.manageMemory=disabled!=='management';
+    const p=new Deepseedian();p.state.settings.useMemory=disabled!=='reads';p.state.settings.manageMemory=disabled!=='management';
     p.state.chats=[{id:'synthetic',title:'synthetic',messages:[],useMemory:disabled!=='chat-reads',contributeMemory:disabled!=='contribution'}];
     p.state.activeId='synthetic';p.capture=()=>{};p.memory=()=>store;let checked=false;
     p.connect=async()=>({options:{model:'test'},prompt:async(_id:string,prompt:string)=>{
@@ -77,7 +77,7 @@ test('host revalidates a current authorization message and cancellation at tool 
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');
   for(const revoke of ['cancel','message-edit','permission']) {
     const store=new MemoryStore(join(await mkdtemp(resolve('.runs/manage-revoke-')),'memory'));
-    const p=new Deepsidian();p.state.settings.useMemory=true;p.state.settings.manageMemory=true;
+    const p=new Deepseedian();p.state.settings.useMemory=true;p.state.settings.manageMemory=true;
     p.state.chats=[{id:'synthetic',title:'synthetic',messages:[]}];p.state.activeId='synthetic';p.capture=()=>{};p.memory=()=>store;
     let checked=false;
     p.connect=async()=>({options:{model:'test'},prompt:async()=>{
@@ -94,7 +94,7 @@ test('host revalidates a current authorization message and cancellation at tool 
 test('a delayed write from an earlier turn cannot borrow a new turn authorization',async()=>{
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');
   const store=new MemoryStore(join(await mkdtemp(resolve('.runs/manage-old-turn-')),'memory'));
-  const p=new Deepsidian();p.state.settings.useMemory=true;p.state.settings.manageMemory=true;
+  const p=new Deepseedian();p.state.settings.useMemory=true;p.state.settings.manageMemory=true;
   p.state.chats=[{id:'synthetic',title:'synthetic',messages:[]}];p.state.activeId='synthetic';p.capture=()=>{};p.memory=()=>store;
   const update=store.update.bind(store);let entered!:()=>void,release!:()=>void;
   const waiting=new Promise<void>(r=>entered=r),gate=new Promise<void>(r=>release=r);
@@ -116,14 +116,14 @@ test('auto connection waits for layout, honors opt-out, and ignores late layout 
   const old=(globalThis as any).window;(globalThis as any).window={setInterval:()=>0};
   try {
     for(const [enabled,unload,expected] of [[true,false,1],[false,false,0],[true,true,0]] as const){
-      const p=new Deepsidian();p.saved={settings:{autoConnect:enabled},chats:[{id:'test',title:'test',messages:[]}],activeId:'test'};
+      const p=new Deepseedian();p.saved={settings:{autoConnect:enabled},chats:[{id:'test',title:'test',messages:[]}],activeId:'test'};
       let calls=0;p.connect=async()=>{calls++;};await p.onload();assert.equal(calls,0);
       if(unload)p.onunload();p.ready();await Promise.resolve();assert.equal(calls,expected);
     }
   }finally{(globalThis as any).window=old;}
 });
 test('concurrent connection requests share one start and wait for an in-progress stop',async()=>{
-  const p=new Deepsidian();let starts=0;let release!:()=>void;
+  const p=new Deepseedian();let starts=0;let release!:()=>void;
   p.connectRuntime=async()=>{starts++;await new Promise<void>(r=>release=r);return {connected:true};};
   const first=p.connect(),second=p.connect();await Promise.resolve();assert.equal(starts,1);release();assert.equal(await first,await second);
   let finishStop!:()=>void;p.client={connected:true,stop:()=>new Promise<void>(r=>finishStop=r)};
@@ -131,7 +131,7 @@ test('concurrent connection requests share one start and wait for an in-progress
   finishStop();await stopping;await Promise.resolve();assert.equal(starts,2);release();await third;
 });
 test('host commands keep management out of model calls and persist a bounded session goal',async()=>{
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';let saved=0,opened=0;
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';let saved=0,opened=0;
   p.saveData=async()=>{saved++;};p.openMemory=()=>{opened++;};
   await p.runCommand('/memory');assert.equal(opened,1);
   await p.runCommand('/goal 理解注意力');assert.equal(p.chat.goal,'理解注意力');assert.equal(saved,1);
@@ -142,7 +142,7 @@ test('host commands keep management out of model calls and persist a bounded ses
   p.busy=true;await assert.rejects(()=>p.runCommand('/goal new'),/结束/);
 });
 test('failed goal changes leave the previous goal active',async()=>{
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[],goal:'原目标'}];p.state.activeId='a';
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[],goal:'原目标'}];p.state.activeId='a';
   p.saveData=async()=>{throw Error('disk full');};
   for(const command of ['/goal 新目标','/goal clear']){
     await assert.rejects(()=>p.runCommand(command),/disk full/);
@@ -150,7 +150,7 @@ test('failed goal changes leave the previous goal active',async()=>{
   }
 });
 test('new chat awaits persistence, blocks concurrent edits, and rolls back on failure',async()=>{
-  const p=new Deepsidian();const original={id:'a',title:'a',messages:[]};
+  const p=new Deepseedian();const original={id:'a',title:'a',messages:[]};
   p.state.chats=[original];p.state.activeId='a';p.toolEvents=['previous tools'];
   let rejectSave!:(error:Error)=>void;
   p.saveData=()=>new Promise<void>((_resolve,reject)=>{rejectSave=reject;});
@@ -169,12 +169,12 @@ test('new chat awaits persistence, blocks concurrent edits, and rolls back on fa
   assert.notEqual(p.state.activeId,'a');assert.deepEqual(p.toolEvents,[]);assert.equal(p.busy,false);
 });
 test('first activation awaits the initial chat save and reports a save failure',async()=>{
-  const p=new Deepsidian();p.saveData=async()=>{throw Error('disk full');};
+  const p=new Deepseedian();p.saveData=async()=>{throw Error('disk full');};
   await assert.rejects(()=>p.onload(),/新建会话保存失败.*disk full/);
   assert.equal(p.state.chats.length,0);assert.equal(p.state.activeId,'');assert.equal(p.busy,false);
 });
 test('host budgets the current captured context and sends the same frozen prompt',async()=>{
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';
   let captured=0,connected=0,sent='';
   p.capture=()=>{captured++;p.source={path:'当前.md',selection:'x'.repeat(6000),nearby:'y'.repeat(10000)};};
   p.connect=async()=>{connected++;p.source={path:'另一个.md',selection:'NEW_SOURCE',nearby:''};return {options:{model:'test'},prompt:async(_id:string,prompt:string)=>{sent=prompt;return {kind:'completed'};}};};
@@ -188,7 +188,7 @@ test('host budgets the current captured context and sends the same frozen prompt
 
 test('failed staged changes never leak into queued background saves', async () => {
   for (const operation of ['new', 'goal', 'select']) {
-    const p = new Deepsidian();
+    const p = new Deepseedian();
     p.state.chats = [{id:'old',title:'old',messages:[],goal:'original'}, {id:'other',title:'other',messages:[]}]; p.state.activeId='old';
     let rejectFirst!:(error:Error)=>void, started!:()=>void, disk:any, count=0;
     const entered=new Promise<void>(resolve=>started=resolve);
@@ -203,7 +203,7 @@ test('failed staged changes never leak into queued background saves', async () =
 });
 
 test('successful staged creation is included in later queued saves', async () => {
-  const p=new Deepsidian();p.state.chats=[{id:'old',title:'old',messages:[]}];p.state.activeId='old';
+  const p=new Deepseedian();p.state.chats=[{id:'old',title:'old',messages:[]}];p.state.activeId='old';
   let release!:()=>void, started!:()=>void, disk:any, count=0;
   const entered=new Promise<void>(resolve=>started=resolve);
   p.saveData=async(snapshot:any)=>{if(++count===1){started();await new Promise<void>(r=>release=r);}disk=structuredClone(snapshot);};
@@ -212,7 +212,7 @@ test('successful staged creation is included in later queued saves', async () =>
 });
 
 test('focused sidebar keeps runtime alive, unfocused idle recycles, and return reconnects', async () => {
-  const p=new Deepsidian();p.layoutReady=true;let focused=true, stops=0, starts=0;
+  const p=new Deepseedian();p.layoutReady=true;let focused=true, stops=0, starts=0;
   p.view={hasFocus:()=>focused};p.client={connected:true};p.lastUsed=0;
   p.disconnect=async()=>{stops++;p.client=undefined;};
   p.connect=async()=>{starts++;p.client={connected:true};return p.client;};
@@ -225,7 +225,7 @@ test('focused sidebar keeps runtime alive, unfocused idle recycles, and return r
 });
 
 test('automatic connection coalesces focus events, backs off failures and honors opt-out/unload', async () => {
-  const p=new Deepsidian();p.layoutReady=true;let attempts=0, fail!:(e:Error)=>void;
+  const p=new Deepseedian();p.layoutReady=true;let attempts=0, fail!:(e:Error)=>void;
   p.connect=()=>{attempts++;return new Promise((_r,reject)=>fail=reject);};
   p.sidebarActivated();p.sidebarActivated();assert.equal(attempts,1);
   fail(Error('missing runtime'));await p.autoAttempt;
@@ -238,7 +238,7 @@ test('automatic connection coalesces focus events, backs off failures and honors
 
 
 test('connect waits for initialization even when the child process is already alive', async () => {
-  const p=new Deepsidian();let release!:()=>void, returned=false;
+  const p=new Deepseedian();let release!:()=>void, returned=false;
   p.connectRuntime=async()=>{p.client={connected:true};await new Promise<void>(r=>release=r);return p.client;};
   const first=p.connect();await Promise.resolve();
   const second=p.connect().then((value:any)=>{returned=true;return value;});
@@ -250,7 +250,7 @@ test('connect waits for initialization even when the child process is already al
 test('memory crosses chats, freezes in-flight edits, withdraws deletion, and honors disabled reads', async () => {
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');
   const root=await mkdtemp(resolve('.runs/recall-host-'));const store=new MemoryStore(join(root,'memory'));
-  const p=new Deepsidian();p.state.settings.useMemory=true;p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';
+  const p=new Deepseedian();p.state.settings.useMemory=true;p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';
   p.memory=()=>store;p.capture=()=>{};
   await p.runCommand('/remember 我熟悉前端，请用前端例子解释');
   const id=(await store.snapshot()).entries[0]!.id;const seen:string[]=[];let phase=0;
@@ -270,14 +270,14 @@ test('memory crosses chats, freezes in-flight edits, withdraws deletion, and hon
 });
 
 test('memory preparation failures retain the draft and do not start a model request', async () => {
-  const p=new Deepsidian();p.state.settings.useMemory=true;p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';p.capture=()=>{};
+  const p=new Deepseedian();p.state.settings.useMemory=true;p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';p.capture=()=>{};
   let accepted=0,connected=0;p.memory=()=>({snapshot:async()=>{throw Error('writer lock');}});p.connect=async()=>{connected++;};
   await p.ask('question',[],()=>accepted++);assert.equal(accepted,0);assert.equal(connected,0);assert.equal(p.chat.messages.length,0);assert.equal(p.busy,false);
 });
 
 
 test('memory tool output has a per-turn budget and never falls back to foreign paths', async () => {
-  const p=new Deepsidian();p.state.settings.useMemory=true;p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';p.capture=()=>{};
+  const p=new Deepseedian();p.state.settings.useMemory=true;p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';p.capture=()=>{};
   const entry={id:'id',text:'x'.repeat(2000),source:'test',createdAt:'2026-09-16'};
   p.memory=()=>({snapshot:async()=>({vaultId:'local',revision:'r',rules:'',entries:[entry]})});
   p.connect=async()=>({options:{model:'test'},prompt:async()=>{
@@ -291,7 +291,7 @@ test('memory tool output has a per-turn budget and never falls back to foreign p
 });
 
 test('session memory policy persists independently, blocks contribution, and respects the vault switch', async () => {
-  const p=new Deepsidian();p.state.settings.useMemory=true;p.state.chats=[{id:'a',title:'a',messages:[]},{id:'b',title:'b',messages:[]}];p.state.activeId='a';p.capture=()=>{};
+  const p=new Deepseedian();p.state.settings.useMemory=true;p.state.chats=[{id:'a',title:'a',messages:[]},{id:'b',title:'b',messages:[]}];p.state.activeId='a';p.capture=()=>{};
   let disk:any;p.saveData=async(s:any)=>{disk=structuredClone(s);};
   await p.setChatMemory('a',{useMemory:false,contributeMemory:false});
   assert.equal(disk.chats[0].useMemory,false);assert.equal(p.state.chats[1].useMemory,undefined);
@@ -306,7 +306,7 @@ test('session memory policy persists independently, blocks contribution, and res
 });
 
 test('session policy saves are atomic and cannot race a question or remember command', async () => {
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[]}];p.state.activeId='a';
   let reject!:(e:Error)=>void,entered!:()=>void;
   const started=new Promise<void>(r=>entered=r);
   p.saveData=()=>{entered();return new Promise<void>((_r,j)=>reject=j);};
@@ -322,7 +322,7 @@ test('session policy saves are atomic and cannot race a question or remember com
 test('M2 generates without writes, confirms selected changes, rejects stale or opted-out sources',async()=>{
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');
   const root=await mkdtemp(resolve('.runs/proposal-host-'));const store=new MemoryStore(join(root,'memory'));
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'请用前端例子'}]}];p.state.activeId='a';p.memory=()=>store;
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'请用前端例子'}]}];p.state.activeId='a';p.memory=()=>store;
   p.runMemoryModel=async(prompt:string)=>{const input=JSON.parse(prompt.split('\n').at(-1)!);return JSON.stringify({proposals:[{kind:'add',text:'偏好前端例子',reason:'明确要求',evidence:[{key:input.sources[0].key,quote:'前端例子'}]}]});};
   let batch=await p.extractMemory('a',new AbortController().signal);assert.equal(p.busy,false);assert.equal((await store.snapshot()).entries.length,0);
   await p.setChatMemory('a',{contributeMemory:false});await assert.rejects(()=>p.applyMemoryProposals(batch,[0]),/关闭贡献/);
@@ -335,7 +335,7 @@ test('M2 generates without writes, confirms selected changes, rejects stale or o
 
 test('M2 cancellation before dispatch and during model call never produces a committable batch',async()=>{
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');
-  const root=await mkdtemp(resolve('.runs/proposal-cancel-'));const p=new Deepsidian();p.memory=()=>new MemoryStore(join(root,'memory'));
+  const root=await mkdtemp(resolve('.runs/proposal-cancel-'));const p=new Deepseedian();p.memory=()=>new MemoryStore(join(root,'memory'));
   p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'use examples'}]}];p.state.activeId='a';let calls=0;
   p.runMemoryModel=async()=>{calls++;return '{"proposals":[]}';};
   const early=new AbortController();early.abort();await assert.rejects(()=>p.extractMemory('a',early.signal));assert.equal(calls,0);assert.equal(p.busy,false);
@@ -345,7 +345,7 @@ test('M2 cancellation before dispatch and during model call never produces a com
 });
 
 test('model catalogue failure preserves a successfully connected runtime and current model',async()=>{
-  const p=new Deepsidian();p.state.settings.checkUpdates=false;
+  const p=new Deepseedian();p.state.settings.checkUpdates=false;
   p.app.vault={adapter:Object.assign(new FileSystemAdapter(),{getBasePath:()=>dir}),configDir:'.obsidian'};
   p.resolveEnvironment=()=>({root:dir,node:process.execPath,home:dir,versions:{dsh:'0.1.5-rc.2'},model:{provider:'local',model:'available'}});
   const original={start:DshClient.prototype.start,models:DshClient.prototype.models,stop:DshClient.prototype.stop,prompt:DshClient.prototype.prompt};let stopped=0;
@@ -361,7 +361,7 @@ test('model catalogue failure preserves a successfully connected runtime and cur
 test('M2 confirms only selected corrections and preserves identity plus previous evidence',async()=>{
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');const root=await mkdtemp(resolve('.runs/proposal-edit-'));const store=new MemoryStore(join(root,'memory'));
   let snap=await store.snapshot();await store.update(snap.revision,{batch:[{text:'使用Java例子',source:'prior confirmation',sourceKeys:['b'.repeat(64)]}]});snap=await store.snapshot();const id=snap.entries[0].id;
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'更正，请用前端例子。请简短回答。'}]}];p.state.activeId='a';p.memory=()=>store;
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'更正，请用前端例子。请简短回答。'}]}];p.state.activeId='a';p.memory=()=>store;
   p.runMemoryModel=async(prompt:string)=>{const input=JSON.parse(prompt.split('\n').at(-1)!);return JSON.stringify({proposals:[{kind:'edit',id,text:'使用前端例子',reason:'用户明确更正',evidence:[{key:input.sources[0].key,quote:'更正，请用前端例子'}]},{kind:'add',text:'偏好简短回答',reason:'明确偏好',evidence:[{key:input.sources[0].key,quote:'请简短回答'}]}]});};
   const batch=await p.extractMemory('a',new AbortController().signal);await p.applyMemoryProposals(batch,[0]);snap=await store.snapshot();
   assert.equal(snap.entries.length,1);assert.equal(snap.entries[0].id,id);assert.equal(snap.entries[0].text,'使用前端例子');assert.equal(snap.entries[0].sourceKeys.length,2);
@@ -371,7 +371,7 @@ test('M2 confirms only selected corrections and preserves identity plus previous
 test('idle pending data survives host reload and a failed toggle preserves opt-out',async()=>{
   const old=(globalThis as any).window;(globalThis as any).window={setInterval:()=>0};
   try {
-    const p=new Deepsidian();const idle={version:1,day:'2026-09-16',calls:1,chars:100,retryAt:0,cursors:{},pending:{id:'pending',batch:{chatId:'a'}}};
+    const p=new Deepseedian();const idle={version:1,day:'2026-09-16',calls:1,chars:100,retryAt:0,cursors:{},pending:{id:'pending',batch:{chatId:'a'}}};
     p.saved={settings:{autoConnect:false,idleMemory:true},chats:[{id:'a',title:'a',messages:[]}],activeId:'a',idleMemory:idle};await p.onload();assert.deepEqual(p.state.idleMemory,idle);assert.equal(p.state.settings.idleMemory,true);
     p.state.settings.idleMemory=false;p.saveData=async()=>{throw Error('disk full');};await assert.rejects(()=>p.setIdleMemory(true));assert.equal(p.state.settings.idleMemory,false);
   } finally {(globalThis as any).window=old;}
@@ -380,7 +380,7 @@ test('idle pending data survives host reload and a failed toggle preserves opt-o
 test('popout activity is observed for existing and new windows, and listeners are cleaned up',async()=>{
   const old=(globalThis as any).window;(globalThis as any).window={setInterval:()=>0};
   try {
-    const p=new Deepsidian();p.saved={settings:{autoConnect:false},chats:[{id:'a',title:'a',messages:[]}],activeId:'a'};
+    const p=new Deepseedian();p.saved={settings:{autoConnect:false},chats:[{id:'a',title:'a',messages:[]}],activeId:'a'};
     const existing=new EventTarget(),later=new EventTarget();const events:any={};let activities=0;
     p.memoryActivity=()=>{activities++;};p.app.workspace.on=(name:string,fn:any)=>{events[name]=fn;};p.app.workspace.iterateAllLeaves=(fn:any)=>fn({view:{containerEl:{ownerDocument:existing}}});
     await p.onload();p.ready();existing.dispatchEvent(new Event('keydown'));assert.equal(activities,1);
@@ -393,7 +393,7 @@ test('popout activity is observed for existing and new windows, and listeners ar
 
 test('discard cannot race a pending memory commit, and successful confirmation clears the pending record',async()=>{
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');const root=await mkdtemp(resolve('.runs/idle-apply-'));const store=new MemoryStore(join(root,'memory'));
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'前端例子'}]}];p.state.activeId='a';p.memory=()=>store;
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'前端例子'}]}];p.state.activeId='a';p.memory=()=>store;
   p.runMemoryModel=async(prompt:string)=>{const source=JSON.parse(prompt.split('\n').at(-1)!).sources[0];return JSON.stringify({proposals:[{kind:'add',text:'使用前端例子',reason:'偏好',evidence:[{key:source.key,quote:source.text}]}]});};
   const batch=await p.extractMemory('a',new AbortController().signal);p.state.idleMemory={version:1,day:'',calls:1,chars:100,retryAt:0,cursors:{},pending:{id:'pending',batch}};
   const update=store.update.bind(store);let release!:()=>void,entered!:()=>void;const started=new Promise<void>(r=>entered=r);
@@ -404,7 +404,7 @@ test('discard cannot race a pending memory commit, and successful confirmation c
 
 test('source range excludes existing history, survives reload and invalidates old pending/manual batches',async()=>{
   const {MemoryStore}=await import('../src/plugin/memory/store.ts');const root=await mkdtemp(resolve('.runs/range-host-'));const store=new MemoryStore(join(root,'memory'));
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'旧偏好'}]}];p.state.activeId='a';p.memory=()=>store;
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'旧偏好'}]}];p.state.activeId='a';p.memory=()=>store;
   const seen:string[][]=[];p.runMemoryModel=async(prompt:string)=>{const sources=JSON.parse(prompt.split('\n').at(-1)!).sources;seen.push(sources.map((s:any)=>s.text));return JSON.stringify({proposals:[{kind:'add',text:sources[0].text,reason:'明确要求',evidence:[{key:sources[0].key,quote:sources[0].text}]}]});};
   const old=await p.extractMemory('a',new AbortController().signal);
   p.state.idleMemory={version:1,day:'',calls:0,chars:0,retryAt:0,cursors:{a:{index:0,key:old.sources[0].key}},pending:{id:'old',batch:old}};
@@ -420,7 +420,7 @@ test('source range excludes existing history, survives reload and invalidates ol
 });
 
 test('source range save failure does not change policy or discard pending work',async()=>{
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'old'}]}];p.state.activeId='a';
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[{role:'user',text:'old'}]}];p.state.activeId='a';
   p.state.idleMemory={version:1,day:'',calls:0,chars:0,retryAt:0,cursors:{},pending:{id:'old',batch:{chatId:'a'}}};
   p.saveData=async()=>{throw Error('disk full');};await assert.rejects(()=>p.setChatMemoryStart('a','now'),/disk full/);
   assert.equal(p.chat.memoryStart,undefined);assert.equal(p.chat.memoryPolicyVersion,undefined);assert.equal(p.state.idleMemory.pending.id,'old');assert.equal(p.busy,false);
@@ -428,13 +428,13 @@ test('source range save failure does not change policy or discard pending work',
 
  test('AI management defaults on for missing settings while saved true/false survive loading',async()=>{
   const old=(globalThis as any).window;(globalThis as any).window={setInterval:()=>0};
-  try{for(const value of [undefined,false,true]){const p=new Deepsidian();p.saved={settings:{autoConnect:false,...(value===undefined?{}:{manageMemory:value})},chats:[{id:'a',title:'a',messages:[]}],activeId:'a'};await p.onload();assert.equal(p.state.settings.manageMemory,value??true);p.onunload();}}
+  try{for(const value of [undefined,false,true]){const p=new Deepseedian();p.saved={settings:{autoConnect:false,...(value===undefined?{}:{manageMemory:value})},chats:[{id:'a',title:'a',messages:[]}],activeId:'a'};await p.onload();assert.equal(p.state.settings.manageMemory,value??true);p.onunload();}}
   finally{(globalThis as any).window=old;}
  });
 
 
 test('source navigation resolves duplicate names in source context and reads unsaved headings before opening',async()=>{
-  const p=new Deepsidian(),files=[{path:'a/topic.md',basename:'topic',extension:'md',stat:{size:20}},{path:'b/topic.md',basename:'topic',extension:'md',stat:{size:20}},{path:'b/source.md',extension:'md',stat:{size:20}}];
+  const p=new Deepseedian(),files=[{path:'a/topic.md',basename:'topic',extension:'md',stat:{size:20}},{path:'b/topic.md',basename:'topic',extension:'md',stat:{size:20}},{path:'b/source.md',extension:'md',stat:{size:20}}];
   const file=files[1];let opened:any,reads=0;
   const active=Object.assign(new MarkdownView(),{file,editor:{getValue:()=> '# New heading\nunsaved contents',setCursor:()=>{},scrollIntoView:()=>{}}});
   p.assertContained=async()=>{};
@@ -448,7 +448,7 @@ test('source navigation resolves duplicate names in source context and reads uns
 
 test('fork publishes only after runtime and host persistence succeed; inherited memory is excluded',async()=>{
   const {memorySourceStart,contributionSources,memoryStartKey}=await import('../src/plugin/memory/proposals.ts');
-  const p=new Deepsidian();
+  const p=new Deepseedian();
   const parent={id:'parent',title:'学习分支',goal:'理解概念',useMemory:false,contributeMemory:true,messages:[
     {role:'user',text:'过去的问题',attachments:['image.png']},{role:'assistant',text:'过去的回答',status:'完成',forkSeq:17},
     {role:'user',text:'后来的问题'},{role:'assistant',text:'后来的回答',status:'完成',forkSeq:29}]};
@@ -474,7 +474,7 @@ test('fork publishes only after runtime and host persistence succeed; inherited 
 });
 
 test('fork titles stay distinct across siblings, nested forks and restored history',async()=>{
-  const p=new Deepsidian();p.capture=()=>{};
+  const p=new Deepseedian();p.capture=()=>{};
   const parent={id:'parent',title:'一个超过二十四个字符的原始会话标题，用来验证编号不会截断标题（2）',messages:[
     {role:'user',text:'question'},{role:'assistant',text:'answer',status:'完成',forkSeq:7}]};
   p.state.chats=[parent];p.state.activeId=parent.id;
@@ -496,7 +496,7 @@ test('fork titles stay distinct across siblings, nested forks and restored histo
 });
 
 test('fork rejects legacy, failed and busy answers and leaves parent selected on runtime failure',async()=>{
-  const p=new Deepsidian();p.state.chats=[{id:'parent',title:'parent',messages:[{role:'assistant',text:'answer',status:'完成'}]}];p.state.activeId='parent';
+  const p=new Deepseedian();p.state.chats=[{id:'parent',title:'parent',messages:[{role:'assistant',text:'answer',status:'完成'}]}];p.state.activeId='parent';
   let calls=0;p.connect=async()=>{calls++;throw Error('runtime unavailable');};
   await assert.rejects(p.forkChat(0),/可靠的分支位置/);assert.equal(calls,0);
   p.chat.messages[0].forkSeq=8;p.chat.messages[0].status='失败';
@@ -514,7 +514,7 @@ test('fork rejects legacy, failed and busy answers and leaves parent selected on
 });
 
 test('context manifest distinguishes images, text, current note and inherited history without embedding image data',async()=>{
-  const p=new Deepsidian();p.state.chats=[{id:'chat',title:'chat',messages:[{role:'user',text:'old'}],fork:{inheritedMessages:1}}];p.state.activeId='chat';
+  const p=new Deepseedian();p.state.chats=[{id:'chat',title:'chat',messages:[{role:'user',text:'old'}],fork:{inheritedMessages:1}}];p.state.activeId='chat';
   p.source={path:'n.md',selection:'a',nearby:'b'};
   const files=[{id:'t',name:'x.txt',text:'x'},{id:'i',name:'x.png',image:{name:'x.png',mimeType:'image/png',data:'eA=='}}];
   const manifest=p.previewContext(files);assert.equal(manifest.historyMessages,1);assert.equal(manifest.inheritedMessages,1);
@@ -525,11 +525,11 @@ test('context manifest distinguishes images, text, current note and inherited hi
 
 
 test('drafts survive persistence independently; abandoned return fields never enter new requests',async()=>{
-  const p=new Deepsidian();p.capture=()=>{};
+  const p=new Deepseedian();p.capture=()=>{};
   p.state.chats=[{id:'parent',title:'main',messages:[]},{id:'child',title:'branch',messages:[]}];p.state.activeId='parent';
   p.setDraftText('parent','parent draft');p.setDraftText('child','child draft');
   let saved:any;p.saveData=async(value:any)=>{saved=structuredClone(value);};await p.persist();
-  const restored=new Deepsidian();restored.state=saved;restored.capture=()=>{};
+  const restored=new Deepseedian();restored.state=saved;restored.capture=()=>{};
   assert.equal(restored.chat.draft.text,'parent draft');await restored.selectChat('child');assert.equal(restored.chat.draft.text,'child draft');
   p.chat.draft.conclusions=[{text:'REMOVED-RETURN-FEATURE'}];
   let request='';p.connect=async()=>({options:{model:'test'},prompt:async(_id:string,text:string)=>{request=text;return {kind:'completed'};}});
@@ -540,7 +540,7 @@ test('drafts survive persistence independently; abandoned return fields never en
 });
 
 test('completion persists reservation before dispatch, preserves chats, and fails closed on storage failure',async()=>{
-  const p=new Deepsidian();p.state.settings.completionEnabled=true;
+  const p=new Deepseedian();p.state.settings.completionEnabled=true;
   p.state.chats=[{id:'parent',title:'original',messages:[]}];p.state.activeId='parent';
   const before=JSON.stringify(p.state.chats);let calls=0;let persisted:any;
   const client={complete:async()=>{calls++;assert.equal(persisted.completionBudget.calls,1);return {text:'候选',elapsedMs:1};}};
@@ -552,7 +552,7 @@ test('completion persists reservation before dispatch, preserves chats, and fail
   assert.equal(calls,1);assert.equal(p.state.completionBudget,undefined);assert.equal(p.completionPending,false);
 });
 test('completion cancellation during connect/settings save never dispatches and quotas reject a second attempt',async()=>{
-  const p=new Deepsidian();p.state.settings.completionEnabled=true;let calls=0,release!:(c:unknown)=>void;
+  const p=new Deepseedian();p.state.settings.completionEnabled=true;let calls=0,release!:(c:unknown)=>void;
   const client={complete:async()=>{calls++;return {text:'候选'};}};
   p.connect=()=>new Promise(r=>release=r);const c=new AbortController();
   const result=p.completeNote({prefix:'前',suffix:'',title:'t'},c.signal);const rejected=assert.rejects(result,/abort/i);
@@ -566,7 +566,7 @@ test('completion cancellation during connect/settings save never dispatches and 
 });
 
 test('completion settings merge independent fields after delayed saves and block requests while saving',async()=>{
-  const p=new Deepsidian();p.state.settings.completionEnabled=true;
+  const p=new Deepseedian();p.state.settings.completionEnabled=true;
   let release!:()=>void;let calls=0;let saved:any;
   p.saveData=async(data:any)=>{calls++;if(calls===1)await new Promise<void>(r=>release=r);saved=structuredClone(data);};
   const disabled=p.setCompletion({completionEnabled:false});await new Promise(r=>setTimeout(r,0));
@@ -578,7 +578,7 @@ test('completion settings merge independent fields after delayed saves and block
 });
 
 test('completion lease prevents idle shutdown; stalled cancellation recycles only without a running chat',()=>{
-  const p=new Deepsidian();p.layoutReady=true;p.lastUsed=0;p.state.settings.autoConnect=false;
+  const p=new Deepseedian();p.layoutReady=true;p.lastUsed=0;p.state.settings.autoConnect=false;
   let disconnected=0;p.disconnect=async()=>{disconnected++;};p.idleScheduler.tick=async()=>{};
   p.client={connected:true,completionActive:true,completionStalled:false};
   p.maintainConnection();assert.equal(disconnected,0);
@@ -587,7 +587,7 @@ test('completion lease prevents idle shutdown; stalled cancellation recycles onl
 });
 
 test('completion connection status clears immediately on cancellation, before startup settles',async()=>{
-  const p=new Deepsidian();p.state.settings.completionEnabled=true;
+  const p=new Deepseedian();p.state.settings.completionEnabled=true;
   p.completionStatusEl={textContent:'',style:{display:'none'}};
   let release!:(value:unknown)=>void;
   p.connect=()=>new Promise(resolve=>{release=resolve;});
@@ -603,7 +603,7 @@ test('completion connection status clears immediately on cancellation, before st
 });
 
 test('selection preparation preserves an existing draft, persists its snapshot, and never sends a model request',async()=>{
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[],draft:{text:'我的问题'}}];p.state.activeId='a';
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[],draft:{text:'我的问题'}}];p.state.activeId='a';
   const text='# Attention\n\nKV cache stores keys and values.';
   const editor={getValue:()=>text,getCursor:(which:string)=>({line:2,ch:which==='from'?0:8})};
   let opened=0,sent=0,saved:any,question='';p.assertContained=async()=>{};
@@ -618,7 +618,7 @@ test('selection preparation preserves an existing draft, persists its snapshot, 
 
 test('failed selection preparation preserves the previous source and draft and does not open the sidebar',async()=>{
   for(const fail of ['path','save']){
-    const p=new Deepsidian(),draft={text:'原问题',context:{path:'old.md',selection:'old',nearby:'',pinned:true}};
+    const p=new Deepseedian(),draft={text:'原问题',context:{path:'old.md',selection:'old',nearby:'',pinned:true}};
     p.state.chats=[{id:'a',title:'a',messages:[],draft}];p.state.activeId='a';p.source={...draft.context};
     const before=structuredClone(p.source);let opened=0;
     p.assertContained=async()=>{if(fail==='path')throw Error('outside vault');};
@@ -630,7 +630,7 @@ test('failed selection preparation preserves the previous source and draft and d
 });
 
 test('pinned selections survive note changes but stay scoped to their own chat',async()=>{
-  const p=new Deepsidian(),a={path:'a.md',selection:'A snapshot',nearby:'',pinned:true},b={path:'b.md',selection:'B snapshot',nearby:'',pinned:true};
+  const p=new Deepseedian(),a={path:'a.md',selection:'A snapshot',nearby:'',pinned:true},b={path:'b.md',selection:'B snapshot',nearby:'',pinned:true};
   p.state.chats=[{id:'a',title:'a',messages:[],draft:{text:'a?',context:a}},{id:'b',title:'b',messages:[],draft:{text:'b?',context:b}},{id:'c',title:'c',messages:[]}];p.state.activeId='a';
   p.app.workspace.getActiveViewOfType=()=>null;p.app.workspace.getActiveFile=()=>null;
   p.capture({file:{path:'unrelated.md'},editor:{getSelection:()=>{throw Error('must not read unrelated editor');}}});
@@ -639,7 +639,7 @@ test('pinned selections survive note changes but stay scoped to their own chat',
 });
 
 test('source navigation reuses a saved line only when the current editor revision matches',async()=>{
-  const {createHash}=await import('node:crypto');const p=new Deepsidian();let current='# Header\n\noriginal',opened:any,cursor:any;
+  const {createHash}=await import('node:crypto');const p=new Deepseedian();let current='# Header\n\noriginal',opened:any,cursor:any;
   const file={path:'note.md'},revision=createHash('sha256').update(current).digest('hex');
   const view=Object.assign(new MarkdownView(),{file,editor:{getValue:()=>current,setCursor:(value:any)=>{cursor=value;},scrollIntoView:()=>{}}});
   p.knowledge=async()=>({path:'note.md',startLine:1});
@@ -654,7 +654,7 @@ test('source navigation reuses a saved line only when the current editor revisio
 });
 
 test('preparing a selection cannot overwrite newer text typed while the path check is pending',async()=>{
-  const p=new Deepsidian();p.state.chats=[{id:'a',title:'a',messages:[],draft:{text:'first draft'}}];p.state.activeId='a';
+  const p=new Deepseedian();p.state.chats=[{id:'a',title:'a',messages:[],draft:{text:'first draft'}}];p.state.activeId='a';
   let release!:()=>void;p.assertContained=()=>new Promise<void>(resolve=>{release=resolve;});p.open=async()=>{};
   let rendered='';p.view={refreshChats:()=>{},setQuestion:(text:string)=>{rendered=text;},refreshStatus:()=>{}};
   const pending=p.prepareSelection({getValue:()=> 'paragraph',getCursor:()=>({line:0,ch:0})},{file:{path:'note.md'}});
@@ -664,7 +664,7 @@ test('preparing a selection cannot overwrite newer text typed while the path che
 
 test('new and forked chats discard the previous composer pinned source',async()=>{
   for(const kind of ['new','fork']){
-    const p=new Deepsidian(),context={path:'old.md',selection:'old snapshot',nearby:'',pinned:true};
+    const p=new Deepseedian(),context={path:'old.md',selection:'old snapshot',nearby:'',pinned:true};
     p.state.chats=[{id:'a',title:'a',draft:{text:'question',context},messages:[{role:'assistant',text:'answer',status:'完成',forkSeq:2}]}];p.state.activeId='a';p.source={...context};
     p.connect=async()=>({fork:async()=>{}});
     if(kind==='new')await p.newChat();else await p.forkChat(0);
@@ -675,7 +675,7 @@ test('new and forked chats discard the previous composer pinned source',async()=
 
 test('a pending chat switch blocks selection preparation and always releases its lifecycle lock',async()=>{
   for(const fail of [false,true]){
-    const p=new Deepsidian();
+    const p=new Deepseedian();
     p.state.chats=[{id:'a',title:'A',messages:[],draft:{text:'A question'}},{id:'b',title:'B',messages:[],draft:{text:'B question'}}];p.state.activeId='a';
     let release!:()=>void,entered!:()=>void;const gate=new Promise<void>(r=>release=r),waiting=new Promise<void>(r=>entered=r);
     p.saveData=async()=>{entered();await gate;if(fail)throw Error('disk full');};
@@ -694,7 +694,7 @@ test('a pending chat switch blocks selection preparation and always releases its
 });
 
 test('accepted selection snapshots are consumed even when no Markdown editor remains',async()=>{
-  const p=new Deepsidian();p.state.chats=[{id:'selection-once',title:'selection',messages:[]}];p.state.activeId='selection-once';
+  const p=new Deepseedian();p.state.chats=[{id:'selection-once',title:'selection',messages:[]}];p.state.activeId='selection-once';
   p.assertContained=async()=>{};p.open=async()=>{};
   await p.prepareSelection({getValue:()=> '# Topic\nSNAPSHOT-ONCE',getCursor:(which:string)=>({line:1,ch:which==='from'?0:13})},{file:{path:'selected.md'}});
   const snapshot=structuredClone(p.source),requests:string[]=[];
@@ -714,7 +714,7 @@ test('closed CRLF notes retain snapshot locations for current and legacy revisio
   const {createHash}=await import('node:crypto');
   const {selectionContext}=await import('../src/plugin/selection-context.ts');
   const lf='# Heading\n\nselected paragraph',snapshot=selectionContext('note.md',lf,{line:2,ch:0},{line:2,ch:18});
-  const p=new Deepsidian(),file={path:'note.md'};let disk=lf.replace(/\n/g,'\r\n'),opened:any;
+  const p=new Deepseedian(),file={path:'note.md'};let disk=lf.replace(/\n/g,'\r\n'),opened:any;
   p.knowledge=async()=>({path:'note.md',startLine:1});
   p.app={vault:{getFileByPath:()=>file,read:async()=>disk},workspace:{getActiveViewOfType:()=>null,getLeavesOfType:()=>[],getLeaf:()=>({openFile:async(_file:any,state:any)=>{opened=state;}})}};
   for(const revision of [snapshot.revision,createHash('sha256').update(lf).digest('hex')]){
@@ -727,7 +727,7 @@ test('closed CRLF notes retain snapshot locations for current and legacy revisio
 
 
 test('selection preparation immediately cancels pending completion before asynchronous source checks',async()=>{
-  const p=new Deepsidian();p.state.settings.completionEnabled=true;
+  const p=new Deepseedian();p.state.settings.completionEnabled=true;
   p.state.chats=[{id:'a',title:'a',messages:[],draft:{text:'question'}}];p.state.activeId='a';
   p.completionStatusEl={textContent:'',style:{display:'none'}};
   let connectRelease!:(value:unknown)=>void,pathRelease!:()=>void,cancelled=0;
@@ -747,7 +747,7 @@ test('selection preparation immediately cancels pending completion before asynch
 });
 
 test('completion uses only editor input and preserves a separately pinned learning snapshot',async()=>{
-  const p=new Deepsidian();p.state.settings.completionEnabled=true;
+  const p=new Deepseedian();p.state.settings.completionEnabled=true;
   const context={path:'selected.md',selection:'private pinned selection',nearby:'learning context',pinned:true};
   p.state.chats=[{id:'a',title:'a',messages:[],draft:{text:'question',context}}];p.state.activeId='a';p.source={...context};
   const input={title:'other',prefix:'editor prefix',suffix:'editor suffix'};

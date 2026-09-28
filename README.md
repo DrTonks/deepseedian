@@ -8,7 +8,9 @@
 
 Deepseedian is a desktop Obsidian assistant powered by a locally installed [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) runtime. Ask questions with note context, inspect sources and citations, fork conversations, manage vault memory, generate local article catalogs and Bases, and request manual inline completion.
 
-Version **0.7.2** · [GitHub Releases](https://github.com/DrTonks/deepseedian/releases/tag/0.7.2) · [Community listing](https://community.obsidian.md/plugins/deepsidian). The interface is currently primarily Chinese; an English interface is not yet available.
+Published version **0.7.2** · [GitHub Releases](https://github.com/DrTonks/deepseedian/releases/tag/0.7.2) · [Community listing](https://community.obsidian.md/plugins/deepsidian). The interface is currently primarily Chinese; an English interface is not yet available.
+
+The current source is **0.7.3 (unreleased)** and uses `deepseedian` as its plugin ID. See the [rename, migration and acceptance guide](docs/VALIDATION-0.7.3.md) before updating an existing installation. The published 0.7.2 assets still use the old ID.
 
 ## Highlights
 
@@ -35,7 +37,7 @@ Click a screenshot for the full image. Follow the [feature walkthrough](docs/DEM
 
 ## Quick start
 
-> Installation status, September 26, 2026: the community web listing is public, but our fresh Obsidian client could not find the plugin, and the public plugin registry did not yet contain `deepsidian`. Use the GitHub Release installation below for now; it has passed a fresh-vault native test. The 0.7.1 automated community review completed without blocking errors; advisory warnings remain. See the [acceptance report](docs/VALIDATION-0.7.1.md).
+> Installation status, September 26, 2026: the community web listing is public, but our fresh Obsidian client could not find the plugin, and the public plugin registry did not yet contain the legacy ID `deepsidian`. Use the GitHub Release installation below for now; it has passed a fresh-vault native test. The 0.7.1 automated community review completed without blocking errors; advisory warnings remain. See the [acceptance report](docs/VALIDATION-0.7.1.md).
 
 Requires **desktop Obsidian 1.13.7+**, **Node.js 24+**, and **DSH 0.1.7-rc.2**. Mobile devices are not supported. Install Node.js separately, then run:
 
@@ -46,7 +48,9 @@ dsh web
 
 Configure a model provider and its credentials in DSH and test a conversation there. You can then close DSH Web. Deepseedian starts a separate local runtime; it does not install or update Node.js, DSH, or itself.
 
-Download `main.js`, `manifest.json`, and `styles.css` from the release into your vault's `.obsidian/plugins/deepsidian/` directory and enable **Deepseedian** in Community plugins. Keep `data.json` and runtime/memory directories when updating. The embedded bridge needs no separate download. The plugin ID remains `deepsidian` for compatibility with existing settings and conversations.
+The published **0.7.2** assets still use the legacy ID `deepsidian`: download `main.js`, `manifest.json`, and `styles.css` into `.obsidian/plugins/deepsidian/` and enable **Deepseedian**. Keep `data.json` and runtime/memory directories when updating. The embedded bridge needs no separate download.
+
+**Unreleased identity change:** current source uses `deepseedian` as the plugin ID and installation directory. Do not mix current builds with 0.7.2 release assets or enable both identities in one vault. Existing users must migrate their data before using the renamed build; see the [release and migration guide](docs/COMMUNITY-RELEASE.md). The historical community link above is still the old listing; a new listing has not been verified. This source change does not update the published release.
 
 On macOS, Obsidian launched from Finder may have a different PATH from your terminal. If automatic discovery fails, set the full Node.js executable path and DSH package directory in advanced runtime settings. Find them with `command -v node` and `npm root -g`; on Windows, use `where.exe node`.
 

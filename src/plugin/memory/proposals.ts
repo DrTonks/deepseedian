@@ -54,7 +54,7 @@ export function parseProposals(raw:string,snapshot:MemorySnapshot,sources:Eviden
   if(!value || !Array.isArray(value.proposals) || value.proposals.length>12)throw Error('提案格式错误或超过 12 项');
   const targets=new Set<string>(), texts=new Set(snapshot.entries.map(e=>e.text.trim()));
   return value.proposals.map((p:any)=>{
-    if(!p || !['add','edit'].includes(p.kind) || typeof p.text!=='string' || !p.text.trim() || p.text.length>2000 || /<!--\s*\/?deepsidian-entry/.test(p.text)
+    if(!p || !['add','edit'].includes(p.kind) || typeof p.text!=='string' || !p.text.trim() || p.text.length>2000 || /<!--\s*\/?(?:deepseedian|deepsidian)-entry/.test(p.text)
       || typeof p.reason!=='string' || !p.reason.trim() || p.reason.length>500)throw Error('提案内容无效');
     if(p.kind==='edit' && (typeof p.id!=='string' || !snapshot.entries.some(e=>e.id===p.id) || targets.has(p.id)))throw Error('更正目标不存在或重复');
     if(texts.has(p.text.trim()))throw Error('提案包含重复记忆');

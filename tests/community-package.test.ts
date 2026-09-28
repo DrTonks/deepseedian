@@ -17,7 +17,7 @@ test('community three-file installation runs chat, restart and isolated organize
   await promisify(execFile)(process.execPath, ['scripts/build.mjs']);
   await mkdir('.runs', { recursive: true });
   const vault = await mkdtemp(resolve('.runs/community-package-'));
-  const pluginDir = join(vault, '.obsidian/plugins/deepsidian');
+  const pluginDir = join(vault, '.obsidian/plugins/deepseedian');
   await mkdir(pluginDir, { recursive: true });
   for (const file of ['main.js', 'manifest.json', 'styles.css']) {
     await copyFile(join('dist', file), join(pluginDir, file));
@@ -39,6 +39,8 @@ test('community three-file installation runs chat, restart and isolated organize
   const plugin = new Plugin();
   plugin.app.vault = { configDir: '.obsidian', adapter: Object.assign(new obsidian.FileSystemAdapter(), { getBasePath: () => vault }) };
   plugin.manifest = JSON.parse(await readFile(join(pluginDir, 'manifest.json'), 'utf8'));
+  assert.equal(plugin.manifest.id, 'deepseedian');
+  assert.equal(plugin.manifest.name, 'Deepseedian');
   Object.assign(plugin.state.settings, { checkUpdates: false, webSearch: false, webFetch: false, manageMemory: false });
   const home = join(vault, 'synthetic-dsh-home');
   await mkdir(home);
@@ -63,7 +65,7 @@ test('community three-file installation runs chat, restart and isolated organize
     const bridgePath = client.options.bridgePath;
     assert.match(bridgePath, /[\\/]\.runtime[\\/]bridge-[a-f0-9]{64}\.mjs$/);
     const bridge = await readFile(bridgePath, 'utf8');
-    assert.match(bridge, /deepsidian\/completion/);
+    assert.match(bridge, /deepseedian\/completion/);
     await plugin.disconnect();
     // A damaged generated file must be repaired from the installed bundle on reconnect.
     await writeFile(bridgePath, 'corrupted local runtime artifact');

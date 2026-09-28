@@ -1,7 +1,7 @@
 // Deterministic DSH service fixture: the production bridge and client run unchanged.
 import { createInterface } from 'node:readline';
 import { pathToFileURL } from 'node:url';
-process.env.DEEPSIDIAN_DSH_PACKAGE = process.argv[2];
+process.env.DEEPSEEDIAN_DSH_PACKAGE = process.argv[2];
 const { apply } = await import(pathToFileURL(process.argv[3]).href);
 const send = frame => process.stdout.write(JSON.stringify({ jsonrpc: '2.0', ...frame }) + '\n');
 let stage, stored = false, release;

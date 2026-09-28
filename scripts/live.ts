@@ -24,7 +24,7 @@ const client = new DshClient({ packageRoot: env.root, nodePath: env.node, dshHom
     calls++;return { source: 'synthetic-test', content: 'This is a fictional test, not a user profile. Explain KV cache to an imaginary student. KV cache stores attention keys and values.' };
   },
   (method, data) => {
-    if (method === 'deepsidian.stream' && data.frame.type === 'chunk' && data.frame.chunk.type === 'text-delta') { deltas++; response += data.frame.chunk.text; process.stdout.write(data.frame.chunk.text); }
+    if (method === 'deepseedian.stream' && data.frame.type === 'chunk' && data.frame.chunk.type === 'text-delta') { deltas++; response += data.frame.chunk.text; process.stdout.write(data.frame.chunk.text); }
     if (method === 'session.event' && data.event.type === 'assistant/message' && data.event.data.usage) usage.push(data.event.data.usage);
     if (method === 'session.event') events.push({ type: data.event.type, ...(data.event.type === 'turn/end' ? { reason: data.event.data.reason?.kind } : {}) });
   });

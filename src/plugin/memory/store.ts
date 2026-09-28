@@ -27,16 +27,16 @@ export interface MemoryHistory { revision:string; entries:JournalSummary[]; canU
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 const coreHash = (files:Record<string,string|null>) => digest(JSON.stringify(CORE_FILES.map(p=>files[p])));
 export function encodeEntries(entries: Entry[]) {
-  return '# 本库记忆\n\n' + entries.map(e => `<!-- deepsidian-entry ${JSON.stringify({id:e.id,createdAt:e.createdAt,source:e.source,sourceKeys:e.sourceKeys})} -->\n${e.text}\n<!-- /deepsidian-entry -->`).join('\n\n') + '\n';
+  return '# 本库记忆\n\n' + entries.map(e => `<!-- deepseedian-entry ${JSON.stringify({id:e.id,createdAt:e.createdAt,source:e.source,sourceKeys:e.sourceKeys})} -->\n${e.text}\n<!-- /deepseedian-entry -->`).join('\n\n') + '\n';
 }
 export function decodeEntries(text: string): Entry[] {
   text=text.replace(/\r\n/g,'\n');
   if (!text.startsWith('# 本库记忆\n')) throw Error('记忆文件格式无法识别；原文件已保留');
   const body = text.slice('# 本库记忆\n'.length);
-  const pattern = /<!-- deepsidian-entry (.+) -->\n([\s\S]*?)\n<!-- \/deepsidian-entry -->/g;
+  const pattern = /<!-- (deepseedian|deepsidian)-entry (.+) -->\n([\s\S]*?)\n<!-- \/\1-entry -->/g;
   const result: Entry[] = []; const ids = new Set<string>();
   for (const match of body.matchAll(pattern)) {
-    const meta = JSON.parse(match[1]!); const value = match[2]!;
+    const meta = JSON.parse(match[2]!); const value = match[3]!;
     if (typeof meta.id !== 'string' || !/^[\da-f-]{36}$/i.test(meta.id) || ids.has(meta.id) || typeof meta.createdAt !== 'string' || typeof meta.source !== 'string') throw Error('记忆元数据损坏或 ID 重复');
     if(meta.sourceKeys!==undefined && (!Array.isArray(meta.sourceKeys) || meta.sourceKeys.some((key:unknown)=>typeof key!=='string'||!/^[a-f0-9]{64}$/.test(key))))throw Error('记忆来源元数据损坏');
     validateText(value); ids.add(meta.id); result.push({...meta,text:value});
@@ -45,7 +45,7 @@ export function decodeEntries(text: string): Entry[] {
   return result;
 }
 function validateText(text: string) {
-  if (!text.trim() || text.length > 2000 || text.includes('<!-- deepsidian-entry') || text.includes('<!-- /deepsidian-entry')) throw Error('记忆须为 1–2000 字符，且不能包含保留的记忆标记');
+  if (!text.trim() || text.length > 2000 || /<!--\s*\/?(?:deepseedian|deepsidian)-entry/.test(text)) throw Error('记忆须为 1–2000 字符，且不能包含保留的记忆标记');
 }
 
 /** M0: one canonical topic, serialized writes and a recoverable write-ahead file.

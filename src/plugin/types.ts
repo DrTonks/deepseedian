@@ -4,7 +4,7 @@ import type { TraceEntry } from './trace';
 import type { UpdateInfo } from './updates';
 import type { IdleMemoryState } from './memory/scheduler';
 
-export const VIEW = 'deepsidian-learning';
+export const VIEW = 'deepseedian-learning';
 export interface Settings { completionEnabled:boolean; completionExcluded:string; packageRoot: string; nodePath: string; dshHome: string; provider: string; model: string; background: string; checkUpdates: boolean; reasoningEffort: string; maxTokens: number; webSearch: boolean; webFetch: boolean; setupComplete: boolean; autoConnect: boolean; useMemory: boolean; idleMemory:boolean; manageMemory:boolean; }
 export interface ContextManifest { version:1; createdAt:number; items:{id?:string;kind:'note'|'attachment'|'image';label:string;chars?:number;bytes?:number;hash:string;text?:string}[]; memoryEnabled:boolean; historyMessages:number; inheritedMessages:number; promptChars:number; }
 export interface ChatDraft { text:string; context?:NoteContext; }

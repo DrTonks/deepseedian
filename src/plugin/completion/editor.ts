@@ -21,7 +21,7 @@ class Ghost extends WidgetType {
   eq(other:Ghost){return other.text===this.text;}
   toDOM(view:EditorView){
     const element=view.dom.ownerDocument.createElement('span');
-    element.className='deepsidian-completion-ghost';element.textContent=this.text;
+    element.className='deepseedian-completion-ghost';element.textContent=this.text;
     element.setAttribute('aria-hidden','true');element.contentEditable='false';
     return element;
   }

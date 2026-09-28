@@ -36,7 +36,7 @@ test('cancel works when the host global timer returns a browser timer ID', () =>
   globalThis.setTimeout = (() => 123) as any;
   try {
     assert.doesNotThrow(() => client.cancel());
-    assert.equal(frames[0].method, 'deepsidian/cancel');
+    assert.equal(frames[0].method, 'deepseedian/cancel');
     assert.equal(frames[0].params.sessionId, 'synthetic-session');
   } finally {
     globalThis.setTimeout = original;

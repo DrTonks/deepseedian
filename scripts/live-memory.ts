@@ -20,7 +20,7 @@ const makeClient=()=>new DshClient(options,async(name,args)=>{
   if(!['memory_search','memory_read'].includes(name))throw Error('This acceptance fixture only exposes memory results');
   const result=readRecall(recall,name,args);active.tools.push({name,args,result});return result;
 },(method,data)=>{
-  if(method==='deepsidian.stream' && data.frame.chunk?.type==='text-delta')active.response+=data.frame.chunk.text;
+  if(method==='deepseedian.stream' && data.frame.chunk?.type==='text-delta')active.response+=data.frame.chunk.text;
   if(method==='session.event' && data.event.type==='assistant/message' && data.event.data.usage)active.usage.push(data.event.data.usage);
 });
 let client=makeClient();

@@ -4,9 +4,11 @@
 
 Deepseedian 是面向桌面端 Obsidian 的 AI 助手，通过本机 [DeepSeek Harness（DSH）](https://github.com/deepseek-ai/deepseek-harness) 连接模型供应商，在笔记上下文中完成问答、来源检索与会话管理。
 
-当前版本为 **0.7.2**，新增分支会话编号。0.7.1 已修复 0.7.0 的社区审核阻断项，[社区条目已公开](https://community.obsidian.md/plugins/deepsidian)。评分卡仍显示部分警告，后续持续改进。界面当前以中文为主。
+当前已发布版本为 **0.7.2**，新增分支会话编号。0.7.1 已修复 0.7.0 的社区审核阻断项，[社区条目已公开](https://community.obsidian.md/plugins/deepsidian)。评分卡仍显示部分警告，后续持续改进。界面当前以中文为主。
 
-> 安装状态（2026-09-26）：社区网页已公开，但本轮 Obsidian 客户端仍搜不到插件，公开插件清单也尚未包含 `deepsidian`。目前请使用下文的 GitHub Release 三文件安装方式；该方式已在独立新库完成实机验收。
+当前源码为 **0.7.3（尚未发布）**，插件 ID 已统一为 `deepseedian`。旧安装升级前请阅读[改名、数据迁移与验收步骤](VALIDATION-0.7.3.md)；公开的 0.7.2 安装包仍使用旧 ID。
+
+> 安装状态（2026-09-26）：社区网页已公开，但本轮 Obsidian 客户端仍搜不到插件，公开插件清单也尚未包含旧 ID `deepsidian`。目前请使用下文的 GitHub Release 三文件安装方式；该方式已在独立新库完成实机验收。
 
 [安装与环境](#安装与环境) · [使用说明](#使用说明) · [费用与隐私](#费用与隐私) · [开发与验证](#开发与验证) · [社区发布指南](COMMUNITY-RELEASE.md)
 
@@ -84,7 +86,7 @@ styles.css
 
 然后在 Obsidian 的“设置 → 第三方插件”中启用 **Deepseedian**。更新已有安装时，保留 `data.json`、运行时目录和记忆目录，替换构建文件后重载插件。
 
-本项目原名 Deepsidian。仓库与显示名称已更新，插件 ID 和安装目录继续使用 `deepsidian`，已有聊天和设置无需迁移。桥接代码已包含在 `main.js` 中，启动时生成到插件私有运行时目录，不需要另外下载 `bridge.mjs`。
+本项目原名 Deepsidian。已发布的 0.7.2 仅修改显示名称，仍使用旧 ID `deepsidian`。**当前源码正在进行尚未发布的身份统一**：插件 ID 和安装目录均改为 `deepseedian`。上面的 0.7.2 下载与构建步骤仍对应旧目录；当前源码的构建不能与旧版附件混装，也不能在同一库同时启用两个身份。已有数据需要迁移，见[发布与迁移说明](COMMUNITY-RELEASE.md)。旧社区条目链接仅记录历史状态，新 ID 的条目尚未确认。桥接代码已包含在 `main.js` 中，启动时生成到插件私有运行时目录，不需要另外下载 `bridge.mjs`。
 
 开发者也可以在构建后运行：
 
@@ -155,7 +157,7 @@ Base 提供动态视图，导航是扫描时的快照。后续更新只修改可
 
 云端 AI 通常需要供应商账号和凭据，可能产生费用。聊天使用 DSH 中配置的供应商；搜索可能另有权限与费用。网络搜索和网页读取在新安装中默认开启，可分别关闭；启用工具不代表每次对话都会调用它们。
 
-插件需在库外读取 Node.js/DSH 安装文件，以及 `~/.dsh` 或自定义目录中的供应商配置与凭据；主动附加的外部文件也会被读取。聊天、运行时日志、已发送附件和记忆保存在本库的 `.obsidian/plugins/deepsidian/` 内。插件不添加客户端遥测；运行时和远端服务的数据处理另受其政策约束，例如 [DeepSeek 隐私政策](https://cdn.deepseek.com/policies/zh-CN/deepseek-privacy-policy.html)。
+插件需在库外读取 Node.js/DSH 安装文件，以及 `~/.dsh` 或自定义目录中的供应商配置与凭据；主动附加的外部文件也会被读取。聊天、运行时日志、已发送附件和记忆保存在本库的插件目录内（已发布 0.7.2 为 `.obsidian/plugins/deepsidian/`，当前改名源码为 `.obsidian/plugins/deepseedian/`）。插件不添加客户端遥测；运行时和远端服务的数据处理另受其政策约束，例如 [DeepSeek 隐私政策](https://cdn.deepseek.com/policies/zh-CN/deepseek-privacy-policy.html)。
 
 `draft`、`encrypted` 等笔记属性不是 AI 访问控制。补全排除目录只约束补全，不限制聊天工具。发送前请检查上下文；删除记忆或移除来源不会清除已发送的聊天、运行时日志或供应商已接收的数据。
 

@@ -1,5 +1,5 @@
 import { Modal, Notice } from 'obsidian';
-import type Deepsidian from '../main';
+import type Deepseedian from '../main';
 import type { MemorySnapshot } from './store';
 
 export class MemoryModal extends Modal {
@@ -15,12 +15,12 @@ export class MemoryModal extends Modal {
   private committedText = '';
   private focusKey?: string;
   private maintenanceOpen = false;
-  private history?: Awaited<ReturnType<ReturnType<Deepsidian['memory']>['history']>>;
+  private history?: Awaited<ReturnType<ReturnType<Deepseedian['memory']>['history']>>;
   private confirmingUndo=false;
   private confirmingRange=false;
   private drafts: Map<string,string>;
   private readonly chatId?: string;
-  constructor(readonly plugin: Deepsidian, private tab: 'entries'|'rules'|'session' = 'entries') {
+  constructor(readonly plugin: Deepseedian, private tab: 'entries'|'rules'|'session' = 'entries') {
     super(plugin.app);
     this.drafts = plugin.memoryDrafts ?? new Map();
     this.chatId = plugin.chat?.id;

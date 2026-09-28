@@ -22,7 +22,7 @@ export async function checkCompletion(container:HTMLElement=document.body){
     keymap.of([{key:'Tab',run:()=>{fallbackTabs++;return true;}},{key:'Escape',run:()=>{fallbackEscapes++;return true;}}]),
   ]})});
   const key=(name:string)=>view.contentDOM.dispatchEvent(new KeyboardEvent('keydown',{key:name,code:name,bubbles:true,cancelable:true}));
-  const ghost=()=>view.dom.querySelector('.deepsidian-completion-ghost')?.textContent;
+  const ghost=()=>view.dom.querySelector('.deepseedian-completion-ghost')?.textContent;
   const pending=()=>{
     let resolve!:(value:{text:string})=>void,signal!:AbortSignal;
     implementation=async(_input,currentSignal)=>{signal=currentSignal;return new Promise<{text:string}>(done=>{resolve=done;});};
