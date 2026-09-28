@@ -7,7 +7,6 @@ import {matchesSourceRevision} from './source-revision';
 import { contextManifest } from './learning-context';
 import { TESTED_DSH } from './versions';
 import { embeddedBridgePath } from './embedded-bridge';
-import { migrateLegacyData, legacyPluginEnabled } from './legacy-migration';
 import { Plugin, MarkdownView, Notice, FileSystemAdapter, TFile, addIcon } from 'obsidian';
 import { join } from 'node:path';
 import { relative, isAbsolute } from 'node:path';
@@ -23,7 +22,7 @@ import { WHALE_ICON } from './logo';
 
 import { VIEW, defaults, type Saved, type Chat, type Message, type Settings } from './types';
 import { LearningView } from './view';
-import { DeepseedianSettings } from './settings';
+import { DeepsidianSettings } from './settings';
 import { SetupModal } from './setup';
 import { MemoryStore } from './memory/store';
 import { MemoryModal } from './memory/modal';
@@ -39,7 +38,7 @@ import {CatalogModal} from './catalog';
 import {SourcesModal} from './sources-modal';
 import { nextForkTitle } from './chat-title';
 
-export default class Deepseedian extends Plugin {
+export default class Deepsidian extends Plugin {
   state: Saved = { settings: { ...defaults }, chats: [], activeId: '' };
   client?: DshClient;
   private completionExtension?:ReturnType<typeof createCompletionExtension>;
@@ -223,22 +222,7 @@ export default class Deepseedian extends Plugin {
     return this.saveIdleMemory(state=>{if(state.pending?.id!==id)throw Error('待审提案已改变，请重新打开');delete state.pending;});
   }
   async onload() {
-    if (this.app.vault?.adapter instanceof FileSystemAdapter) {
-      const base = this.app.vault.adapter.getBasePath();
-      const config = join(base, this.app.vault.configDir);
-      try {
-        const result = await migrateLegacyData({
-          pluginsDirectory: join(config, 'plugins'),
-          destination: join(base, this.manifest.dir ?? `${this.app.vault.configDir}/plugins/${this.manifest.id}`),
-          legacyEnabled: await legacyPluginEnabled(config),
-        });
-        if (result === 'migrated') new Notice('旧版会话、设置和长期记忆已导入 Deepseedian；原数据已保留');
-      } catch (error) {
-        new Notice(`Deepseedian 未启动：${String(error)}`, 15000);
-        throw error;
-      }
-    }
-    addIcon('deepseedian-whale', WHALE_ICON);
+    addIcon('deepsidian-whale', WHALE_ICON);
     const saved = await this.loadData() as Partial<Saved> | null;
     this.state = { settings: { ...defaults, ...saved?.settings }, chats: saved?.chats ?? [], activeId: saved?.activeId ?? '', updates: saved?.updates, idleMemory:saved?.idleMemory, completionBudget:saved?.completionBudget };
     if (!this.chat) await this.newChat();
@@ -258,7 +242,7 @@ export default class Deepseedian extends Plugin {
     }});
     this.addCommand({id:'dismiss-completion',name:'取消当前补全',callback:()=>this.cancelCompletion()});
     this.registerView(VIEW, leaf => new LearningView(leaf, this));
-    this.addRibbonIcon('deepseedian-whale', 'Deepseedian 学习助手', () => void this.open());
+    this.addRibbonIcon('deepsidian-whale', 'Deepseedian 学习助手', () => void this.open());
     this.addCommand({ id: 'open', name: '打开学习侧栏', callback: () => void this.open() });
     this.addCommand({id:'catalog',name:'整理文章目录',callback:()=>new CatalogModal(this).open()});
     this.addCommand({id:'context',name:'预览来源与关联笔记',callback:()=>new SourcesModal(this).open()});
@@ -275,7 +259,7 @@ export default class Deepseedian extends Plugin {
       const current = this.app.workspace.getActiveViewOfType(MarkdownView);
       if (current) { this.lastMarkdown = current; if (this.includeContext) this.capture(current); this.view?.refreshContext(); }
     }));
-    this.addSettingTab(new DeepseedianSettings(this));
+    this.addSettingTab(new DeepsidianSettings(this));
     this.addCommand({ id: 'setup', name: '设置与连接引导', callback: () => new SetupModal(this).open() });
     this.addCommand({id:'memory',name:'管理本库记忆',callback:()=>this.openMemory()});
     this.addCommand({id:'memory-rules',name:'编辑记忆整理规则',callback:()=>this.openMemory('rules')});
@@ -583,7 +567,7 @@ export default class Deepseedian extends Plugin {
   }
   private onRuntime(method: string, data: any) {
     if (this.disposed) return;
-    if (method === 'deepseedian.stream' && data.sessionId === this.chat?.id && this.activeMessage) {
+    if (method === 'deepsidian.stream' && data.sessionId === this.chat?.id && this.activeMessage) {
       const frame = data.frame;
       if (frame.type === 'start') { this.attempt = ''; this.reasoningAttempt = ''; }
       if (frame.type === 'chunk' && frame.chunk.type === 'reasoning-delta') {

@@ -60,8 +60,8 @@ test('current DSH uses explicit provider configs and rejects removed official pr
   const patch=runtimePatch(options,{settings,disabled:{}}),entries=patch.flatMap(item=>'insert' in item?item.insert:[]);
   assert.deepEqual(patch.find(item=>item.id==='llm-deepseek')?.config,settings['llm-deepseek']);
   assert.ok(!entries.some(item=>item.name==='@deepseek-ai/dsh-settings-file'));
-  assert.deepEqual(entries.find(item=>item.id==='deepseedian-pi')?.config,settings['llm-pi-ai']);
-  assert.deepEqual(entries.find(item=>item.id==='deepseedian-web-search')?.config,settings['web-search-deepseek']);
+  assert.deepEqual(entries.find(item=>item.id==='deepsidian-pi')?.config,settings['llm-pi-ai']);
+  assert.deepEqual(entries.find(item=>item.id==='deepsidian-web-search')?.config,settings['web-search-deepseek']);
   assert.ok(entries.every(item=>!('inject' in item)||!item.inject?.includes('settings')));
   for(const protocol of ['messages','chat-completions'])assert.throws(()=>runtimePatch(options,{settings:{'llm-deepseek':{protocol}},disabled:{}}),/llm-deepseek.protocol/);
   assert.match(JSON.stringify(runtimePatch(options)),/dsh-settings-file/,'old runtime composition remains supported for migration');

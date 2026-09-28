@@ -7,8 +7,6 @@ dist/
 .preview/
 .runtime/
 .memory-runtime/
-.legacy-stage-*/
-.legacy-import*.json
 .obsidian/
 data.json
 *.log

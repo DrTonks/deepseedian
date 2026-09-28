@@ -4,7 +4,7 @@ export const editorInfoField=StateField.define<any>({create:()=>null,update:valu
 export class Plugin {
   app:any={workspace:{onLayoutReady:(cb:()=>void)=>{this.ready=cb;},on:()=>({})}};
   ready?:()=>void;
-  manifest={id:'deepseedian'};
+  manifest={id:'deepsidian'};
   saved:any=null;
   async loadData(){return this.saved;} async saveData(_data:any){}
   addStatusBarItem(){return {style:{},textContent:'',setAttribute(){}};}

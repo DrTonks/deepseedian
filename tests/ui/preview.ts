@@ -1,6 +1,6 @@
 import {checkCompletion} from './completion-checks';
 import {checkLearning} from './learning-checks';
-import {DeepseedianSettings} from '../../src/plugin/settings';
+import {DeepsidianSettings} from '../../src/plugin/settings';
 import { TESTED_DSH } from '../../src/plugin/versions';
 import { LearningView } from '../../src/plugin/view';
 import { SetupModal } from '../../src/plugin/setup';
@@ -17,7 +17,7 @@ import { checkHistory } from './history-checks';
 import { checkAttachments } from './attachment-checks';
 import { checkMemoryControls, checkOrganizerControls } from './memory-checks';
 
-addIcon('deepseedian-whale',WHALE_ICON);
+addIcon('deepsidian-whale',WHALE_ICON);
 const start=Date.UTC(2026,8,13,2,0,0);
 const event=(type:string,data:any,offset:number)=>({...traceEntry({type,data}),at:start+offset});
 const answer='KV cache 保存注意力计算中已经算过的 Key 和 Value。生成下一个 token 时，可以复用之前的结果，避免重复计算。\n\n可以把它理解为增量渲染：旧内容的中间结果留在缓存里，新内容只补算新增部分。不过随着上下文增长，缓存也会占用更多显存。\n\n你的笔记已经介绍了 Q、K、V，可以接着对照注意力公式看：哪些量随新 token 改变，哪些量能够复用。';
@@ -120,7 +120,7 @@ if(screen==='settings'){
   plugin.setCompletion=async(patch:object)=>{Object.assign(plugin.state.settings,patch);};
   plugin.setManageMemory=async(value:boolean)=>{plugin.state.settings.manageMemory=value;};plugin.setIdleMemory=async(value:boolean)=>{plugin.state.settings.idleMemory=value;};
   plugin.resolveEnvironment=()=>({versions:{dsh:TESTED_DSH},choices:[{provider:'deepseek-official',model:'deepseek-flash'}]});
-  const settings=new DeepseedianSettings(plugin);settings.containerEl=root;settings.display();
+  const settings=new DeepsidianSettings(plugin);settings.containerEl=root;settings.display();
   const sections=Array.from(root.querySelectorAll<HTMLDetailsElement>('.ds-settings-section'));
   if(sections.length!==6||sections.map(s=>s.open).join()!=='true,true,true,false,false,false')throw Error('settings grouping/default disclosure failed');
   sections[1]!.querySelector('summary')!.click();await new Promise(r=>setTimeout(r,0));settings.display();

@@ -38,11 +38,11 @@ export function completionBridge(ctx, createUserMessage, reply) {
   };
   return {
     handle(frame) {
-      if (frame.method === 'deepseedian/completion-cancel') {
+      if (frame.method === 'deepsidian/completion-cancel') {
         if (active?.id === frame.params?.requestId) active.controller.abort(Error('补全已取消'));
         return true;
       }
-      if (frame.method !== 'deepseedian/completion') return false;
+      if (frame.method !== 'deepsidian/completion') return false;
       const { requestId, input } = frame.params ?? {};
       if (typeof requestId !== 'string') return true;
       if (disposed || active) { reply(requestId, { error: { code: -32000, message: '补全请求仍在清理或运行时已关闭' } }); return true; }

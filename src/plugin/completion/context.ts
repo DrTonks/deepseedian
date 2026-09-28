@@ -95,22 +95,6 @@ function endsProseBlock(input:CompletionInput):boolean {
   return !line.trim()||/^[ \t]*(?:(?:[-+*]|\d+[.)])\s|>\s?|#{1,6}(?:\s|$)|`{3,}|~{3,}|(?:-{3,}|_{3,}|\*{3,})[ \t]*$)/.test(line);
 }
 
-function repeatsClosingEmphasis(text:string,suffix:string):boolean {
-  const marker=/^(\*{1,3}|_{1,3})(?![*_])/.exec(suffix)?.[0];
-  if(!marker||!text.trimEnd().endsWith(marker))return false;
-  // Only reject an unmatched final delimiter. A balanced emphasis span inside
-  // the candidate, an escaped marker, or a marker in inline code is not a copy
-  // of the delimiter that the suffix already supplies.
-  let ticks=0,count=0,lastEnd=-1;
-  for(const match of text.matchAll(/\\.|`+|\*+|_+/g)){
-    const token=match[0];
-    if(token.startsWith('\\'))continue;
-    if(token.startsWith('`')){if(!ticks)ticks=token.length;else if(ticks===token.length)ticks=0;continue;}
-    if(!ticks&&token===marker){count++;lastEnd=match.index+token.length;}
-  }
-  return count%2===1&&lastEnd===text.trimEnd().length;
-}
-
 /** Finalize once before display; accepting a candidate never rewrites its text. */
 export function normalizeCompletion(text:string,input?:CompletionInput):string|null {
   const result=text;
@@ -122,7 +106,6 @@ export function normalizeCompletion(text:string,input?:CompletionInput):string|n
     const closing=/^[。！？!?.,，;；:：]+/.exec(input.suffix)?.[0];
     const ending=/([。！？!?.,，;；:：]+)(?:\*{1,3}|_{1,3})?\s*$/.exec(result)?.[1];
     if(closing&&ending===closing)return null;
-    if(repeatsClosingEmphasis(result,input.suffix))return null;
   }
   // A new paragraph/list item cannot finish the candidate's dangling clause.
   if(input&&endsProseBlock(input)&&/[,;，；]\s*$/.test(result))return null;

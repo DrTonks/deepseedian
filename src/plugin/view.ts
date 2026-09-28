@@ -1,5 +1,5 @@
 import { ItemView, WorkspaceLeaf, MarkdownView, MarkdownRenderer, Notice, TFile, Component, Scope, setIcon, FuzzySuggestModal } from 'obsidian';
-import type Deepseedian from './main';
+import type Deepsidian from './main';
 import { VIEW, type Settings } from './types';
 import { buildPrompt, EMPTY_CONTEXT } from './context';
 import { readAttachment, attachmentText, FILE_ACCEPT, type Attachment } from './attachments';
@@ -48,7 +48,7 @@ export class LearningView extends ItemView {
   private focusCleanup?: () => void;
   hasFocus() { const doc = this.contentEl.ownerDocument; return !this.closed && !this.changing && doc.hasFocus() && this.contentEl.contains(doc.activeElement); }
   refreshConnection() { if (!this.closed && this.statusEl) { this.renderModels(); this.refreshStatus(); this.renderMessages(); } }
-  constructor(leaf: WorkspaceLeaf, readonly plugin: Deepseedian) {
+  constructor(leaf: WorkspaceLeaf, readonly plugin: Deepsidian) {
     super(leaf);
     // The host handles shortcuts before DOM listeners (notably Cmd+Enter).
     this.scope = new Scope(this.app.scope);
@@ -60,16 +60,16 @@ export class LearningView extends ItemView {
   }
   getViewType() { return VIEW; }
   getDisplayText() { return 'Deepseedian'; }
-  getIcon() { return 'deepseedian-whale'; }
+  getIcon() { return 'deepsidian-whale'; }
   async onOpen() {
     this.closed = false; this.addChild(this.markdown); this.plugin.attach(this);
-    const root = this.contentEl; root.empty(); root.addClass('deepseedian'); root.tabIndex = -1;
+    const root = this.contentEl; root.empty(); root.addClass('deepsidian'); root.tabIndex = -1;
     const wake = () => { if (this.hasFocus()) this.plugin.sidebarActivated(); };
     root.addEventListener('focusin', wake);
     root.ownerDocument.defaultView?.addEventListener('focus', wake);
     this.focusCleanup = () => { root.removeEventListener('focusin', wake); root.ownerDocument.defaultView?.removeEventListener('focus', wake); };
     const header = root.createDiv('ds-header');
-    const brand = header.createDiv('ds-brand'); setIcon(brand.createSpan('ds-brand-icon'), 'deepseedian-whale');
+    const brand = header.createDiv('ds-brand'); setIcon(brand.createSpan('ds-brand-icon'), 'deepsidian-whale');
     this.chatTitle = brand.createEl('strong', { cls: 'ds-chat-title', text: '新对话' });
     const actionsHeader = header.createDiv('ds-header-actions');
     const historyButton = this.iconButton(actionsHeader, 'history', 'Session history', () => {});
@@ -345,7 +345,7 @@ export class LearningView extends ItemView {
       };
     }
     if (chat?.systemPrompt) { const system = this.messages.createEl('details', { cls: 'ds-system' }); system.createEl('summary', { text: '系统提示词 · DSH 实际组装结果' }); system.createEl('pre', { text: chat.systemPrompt }); }
-    if (!chat?.messages.length) { const empty = this.messages.createDiv('ds-empty'); setIcon(empty.createDiv('ds-empty-icon'), 'deepseedian-whale'); empty.createEl('h2', { text: '今天想理解什么？' }); empty.createEl('p', { text: '结合当前笔记，逐步展开解释。' }); empty.createEl('small', { text: '选中术语带入上下文，或附上资料开始提问。' }); return; }
+    if (!chat?.messages.length) { const empty = this.messages.createDiv('ds-empty'); setIcon(empty.createDiv('ds-empty-icon'), 'deepsidian-whale'); empty.createEl('h2', { text: '今天想理解什么？' }); empty.createEl('p', { text: '结合当前笔记，逐步展开解释。' }); empty.createEl('small', { text: '选中术语带入上下文，或附上资料开始提问。' }); return; }
     let sourcePath='';
     for (const [messageIndex, message] of chat.messages.entries()) {
       if(message.role==='user')sourcePath=message.source?.path??'';
@@ -428,7 +428,7 @@ export class LearningView extends ItemView {
 }
 
 class VaultPicker extends FuzzySuggestModal<TFile> {
-  constructor(app: Deepseedian['app'], private choose: (file: TFile) => void) { super(app); this.setPlaceholder('搜索并附加笔记或图片'); }
+  constructor(app: Deepsidian['app'], private choose: (file: TFile) => void) { super(app); this.setPlaceholder('搜索并附加笔记或图片'); }
   getItems() { return this.app.vault.getFiles().filter(f => FILE_ACCEPT.split(',').includes('.' + f.extension.toLowerCase())); }
   getItemText(file: TFile) { return file.path; }
   onChooseItem(file: TFile) { this.choose(file); }

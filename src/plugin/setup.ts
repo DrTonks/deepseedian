@@ -1,11 +1,11 @@
 import { Modal, Setting } from 'obsidian';
-import type Deepseedian from './main';
+import type Deepsidian from './main';
 
 import { TESTED_DSH } from './versions';
 export { TESTED_DSH } from './versions';
 export class SetupModal extends Modal {
   private checking = false;
-  constructor(private plugin: Deepseedian, private done?: () => void) { super(plugin.app); }
+  constructor(private plugin: Deepsidian, private done?: () => void) { super(plugin.app); }
   onOpen() {
     const root = this.contentEl; root.empty(); root.addClass('ds-setup');
     root.createEl('h2', { text: '连接 DeepSeek Harness' });

@@ -1,5 +1,5 @@
 import { FileSystemAdapter, Modal, Notice, Setting, TFolder } from 'obsidian';
-import type Deepseedian from './main';
+import type Deepsidian from './main';
 import { assertCatalogPath, buildCatalog, catalogPath, CATALOG_LIMIT, navigationUpdate, readNavigation, type CatalogPlan } from './catalog-core';
 
 /** Preview then create or update a verified generated region; source articles remain untouched. */
@@ -12,7 +12,7 @@ export class CatalogModal extends Modal {
   private closed=false;
   private message='';
   private previewEl?:HTMLElement;
-  constructor(private plugin:Deepseedian){super(plugin.app);this.source=this.app.vault.getAbstractFileByPath('posts') instanceof TFolder?'posts':'';}
+  constructor(private plugin:Deepsidian){super(plugin.app);this.source=this.app.vault.getAbstractFileByPath('posts') instanceof TFolder?'posts':'';}
   onOpen(){this.closed=false;this.render();}
   onClose(){this.closed=true;this.contentEl.empty();}
   private root(){const a=this.app.vault.adapter;if(!(a instanceof FileSystemAdapter))throw Error('目录整理仅支持桌面本地知识库');return a.getBasePath();}

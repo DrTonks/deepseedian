@@ -1,5 +1,5 @@
 import { Modal } from 'obsidian';
-import type Deepseedian from '../main';
+import type Deepsidian from '../main';
 import type { ProposalBatch } from './proposals';
 
 export class OrganizerModal extends Modal {
@@ -20,7 +20,7 @@ export class OrganizerModal extends Modal {
     this.focusKey=target && this.contentEl.contains(target)?target.getAttribute('data-organizer-focus')??undefined:undefined;
   };
   private sourcesOpen=false;
-  constructor(readonly plugin:Deepseedian,private pending?:{id:string;batch:ProposalBatch}){super(plugin.app);this.chatId=pending?.batch.chatId??plugin.chat?.id??'';if(pending){this.batch=structuredClone(pending.batch);this.message='闲时提案已保存；请核对来源后选择要保存的项目。';}}
+  constructor(readonly plugin:Deepsidian,private pending?:{id:string;batch:ProposalBatch}){super(plugin.app);this.chatId=pending?.batch.chatId??plugin.chat?.id??'';if(pending){this.batch=structuredClone(pending.batch);this.message='闲时提案已保存；请核对来源后选择要保存的项目。';}}
   onOpen(){this.modalEl.addClass('ds-memory-dialog');this.contentEl.addClass('ds-memory-modal');this.contentEl.ownerDocument.addEventListener('focusin',this.trackFocus);this.render();}
   onClose(){this.closed=true;this.contentEl.ownerDocument.removeEventListener('focusin',this.trackFocus);this.controller?.abort();}
   private button(parent:HTMLElement,label:string,action:()=>void,disabled=false){const button=parent.createEl('button',{text:label,attr:{type:'button'}});button.setAttribute('data-organizer-focus',label);button.disabled=disabled;button.onclick=action;return button;}

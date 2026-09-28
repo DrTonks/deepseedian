@@ -53,7 +53,7 @@ test('default Messages protocol: native tool results, reasoning and durable proc
   const options={packageRoot:env.root,nodePath:env.node,dshHome:home,runtimeHome:join(dir,'runtime'),bridgePath:resolve('src/plugin/bridge.mjs'),cwd:resolve('fixtures'),provider:'deepseek-official',model:'deepseek-flash',maxTokens:2048,reasoningEffort:'high'};
   let text='',reasoning='',calls=0,turnEnds=0;
   const listen=(method:string,data:any)=>{
-    if(method==='deepseedian.stream'&&data.frame.chunk?.type==='text-delta')text+=data.frame.chunk.text;
+    if(method==='deepsidian.stream'&&data.frame.chunk?.type==='text-delta')text+=data.frame.chunk.text;
     if(method==='session.event'&&data.event.type==='assistant/message')reasoning+=reasoningText(data.event.data.stream);
     if(method==='session.event'&&data.event.type==='turn/end')turnEnds++;
   };
@@ -179,8 +179,8 @@ test('custom provider configuration survives legacy settings and current profile
   });
   server.listen(0,'127.0.0.1');await once(server,'listening');
   const baseURL=`http://127.0.0.1:${(server.address() as any).port}`;
-  const config={providers:{fixture:{api:'openai-completions',baseURL,apiKeyEnv:'DEEPSEEDIAN_TEST_KEY',models:[{id:'fixture-model',contextWindow:32768}]}}};
-  const oldKey=process.env.DEEPSEEDIAN_TEST_KEY;process.env.DEEPSEEDIAN_TEST_KEY='synthetic-provider-key';
+  const config={providers:{fixture:{api:'openai-completions',baseURL,apiKeyEnv:'DEEPSIDIAN_TEST_KEY',models:[{id:'fixture-model',contextWindow:32768}]}}};
+  const oldKey=process.env.DEEPSIDIAN_TEST_KEY;process.env.DEEPSIDIAN_TEST_KEY='synthetic-provider-key';
   try{
     for(const mode of ['legacy','patch','reenabled','disabled-unused']){
       const home=join(dir,mode);mkdirSync(home);
@@ -206,7 +206,7 @@ test('custom provider configuration survives legacy settings and current profile
     assert.equal(calls,4);assert.deepEqual(errors,[]);
   }finally{
     server.closeAllConnections();await new Promise<void>(r=>server.close(()=>r()));
-    oldKey===undefined?delete process.env.DEEPSEEDIAN_TEST_KEY:process.env.DEEPSEEDIAN_TEST_KEY=oldKey;
+    oldKey===undefined?delete process.env.DEEPSIDIAN_TEST_KEY:process.env.DEEPSIDIAN_TEST_KEY=oldKey;
   }
 });
 
@@ -231,7 +231,7 @@ test('provider patch states preserve final disable and empty replacement semanti
   assert.ok(!models.choices.some(m=>m.provider==='stale'));
   const options={packageRoot:env.root,nodePath:env.node,dshHome:home,runtimeHome:join(home,'runtime'),bridgePath:resolve('src/plugin/bridge.mjs'),cwd:resolve('fixtures'),...models.selected};
   const patch=runtimePatch(options,configuration);
-  assert.ok(patch.some(item=>'insert' in item&&item.insert?.some(entry=>entry.id==='deepseedian-pi'&&entry.disabled)));
+  assert.ok(patch.some(item=>'insert' in item&&item.insert?.some(entry=>entry.id==='deepsidian-pi'&&entry.disabled)));
   assert.throws(()=>runtimePatch({...options,provider:'stale'},configuration),/禁用了所选供应商适配器 llm-pi-ai/);
   assert.throws(()=>runtimePatch({...options,webSearch:true},configuration),/禁用了 web-search-deepseek/);
   assert.doesNotThrow(()=>runtimePatch({...options,memoryOrganizer:true,webSearch:true},configuration));

@@ -80,27 +80,6 @@ test('category arrays and categories alias share the first-category navigation b
   assert.deepEqual(plan.entries.map(e=>e.category),['学习','学习']);assert.equal(plan.missing.category,0);
 });
 
-test('legacy catalog markers migrate on update without changing user sections or bypassing integrity checks',()=>{
-  const before=buildCatalog([{path:'posts/a.md'}],'posts','out');
-  const after=buildCatalog([{path:'posts/a.md'},{path:'posts/b.md'}],'posts','out');
-  const legacy=before.navigation.replaceAll('deepseedian-catalog','deepsidian-catalog');
-  assert.deepEqual(readNavigation(legacy).entries,before.entries);
-  for(const ending of ['\n','\r\n']){
-    const previous=('前言\n'+legacy+'\n后记').replace(/\n/g,ending);
-    const result=navigationUpdate(previous,after,'posts');
-    assert.ok(result.text.startsWith(`前言${ending}`));
-    assert.ok(result.text.endsWith(`${ending}后记`));
-    assert.equal(readNavigation(result.text).lineEnding,ending);
-    assert.deepEqual(readNavigation(result.text).entries,after.entries);
-    assert.match(result.text,/<!-- deepseedian-catalog:v1:/);
-    assert.doesNotMatch(result.text,/deepsidian-catalog/);
-  }
-  assert.throws(()=>readNavigation(legacy.replace('## 未分类','## 我的分类')),/已被编辑/);
-  assert.throws(()=>readNavigation(legacy+before.navigation),/唯一/);
-  assert.throws(()=>readNavigation(legacy.replace('/deepsidian-catalog','/deepseedian-catalog')),/唯一/);
-  assert.throws(()=>readNavigation(before.navigation.replace('/deepseedian-catalog','/deepsidian-catalog')),/唯一/);
-});
-
 test('managed navigation accepts Windows line endings and preserves surrounding text exactly',()=>{
   const before=buildCatalog([{path:'posts/a.md',frontmatter:{title:'原标题'}}],'posts','out');
   const after=buildCatalog([{path:'posts/a.md',frontmatter:{title:'新标题'}}],'posts','out');

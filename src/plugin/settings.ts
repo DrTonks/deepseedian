@@ -1,10 +1,10 @@
 import { PluginSettingTab, Setting, Notice } from 'obsidian';
-import type Deepseedian from './main';
+import type Deepsidian from './main';
 import type { Settings } from './types';
 import { SetupModal } from './setup';
 
-export class DeepseedianSettings extends PluginSettingTab {
-  constructor(readonly plugin: Deepseedian) { super(plugin.app, plugin); }
+export class DeepsidianSettings extends PluginSettingTab {
+  constructor(readonly plugin: Deepsidian) { super(plugin.app, plugin); }
   private expanded = new Map<string,boolean>();
   private section(parent:HTMLElement,id:string,title:string,description:string,open:boolean) {
     const details=parent.createEl('details',{cls:'ds-settings-section',attr:{'data-settings-section':id}});

@@ -1,10 +1,10 @@
 import {Modal,Notice} from 'obsidian';
-import type Deepseedian from './main';
+import type Deepsidian from './main';
 
 /** Read-only previews stay local until explicitly attached to the composer. */
 export class SourcesModal extends Modal {
   private closed=false;
-  constructor(private plugin:Deepseedian,private link=''){super(plugin.app);}
+  constructor(private plugin:Deepsidian,private link=''){super(plugin.app);}
   onClose(){this.closed=true;}
   onOpen(){this.closed=false;this.contentEl.empty();void this.draw();}
   private async draw(){

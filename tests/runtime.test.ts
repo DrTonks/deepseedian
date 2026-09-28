@@ -42,7 +42,7 @@ test('real DSH bridge: tools, text stream, cancel, followup and process resume',
     if (method === 'session.event' && data.event.type === 'turn/end') endSeq = data.event.seq;
     if (method === 'session.event' && data.event.type === 'system/message') systemPrompt = true;
     if (method === 'session.event' && data.event.type === 'assistant/message') reasoning += reasoningText(data.event.data.stream);
-    if(method === 'deepseedian.stream' && data.frame.chunk?.type === 'text-delta') { text += data.frame.chunk.text; if (data.frame.chunk.text === 'partial') onHeld(); }
+    if(method === 'deepsidian.stream' && data.frame.chunk?.type === 'text-delta') { text += data.frame.chunk.text; if (data.frame.chunk.text === 'partial') onHeld(); }
   };
   let client = new DshClient(options, async () => {toolCalls++; return {text:'test context'};}, listener);
   const id = randomUUID();

@@ -10,8 +10,8 @@
     "build": "npm run typecheck && node scripts/build.mjs",
     "install:dev": "node scripts/install.mjs",
     "doctor": "node scripts/doctor.ts",
-    "test": "node --test tests/core.test.ts tests/trace.test.ts tests/memory.test.ts tests/manage.test.ts tests/host.test.ts tests/discovery.test.ts tests/scheduler.test.ts tests/catalog.test.ts tests/catalog-host.test.ts tests/knowledge.test.ts tests/completion-budget.test.ts tests/completion.test.ts tests/selection-context.test.ts tests/legacy-migration.test.ts tests/package-source.test.ts",
-    "test:integration": "node --test tests/runtime.test.ts tests/web.test.ts tests/messages.test.ts tests/completion-runtime.test.ts tests/community-package.test.ts tests/identity-runtime.test.ts",
+    "test": "node --test tests/core.test.ts tests/trace.test.ts tests/memory.test.ts tests/manage.test.ts tests/host.test.ts tests/discovery.test.ts tests/scheduler.test.ts tests/catalog.test.ts tests/catalog-host.test.ts tests/knowledge.test.ts tests/completion-budget.test.ts tests/completion.test.ts tests/selection-context.test.ts",
+    "test:integration": "node --test tests/runtime.test.ts tests/web.test.ts tests/messages.test.ts tests/completion-runtime.test.ts tests/community-package.test.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "live": "node scripts/live.ts",
     "preview": "node scripts/preview.mjs",
@@ -41,7 +41,7 @@
     "obsidian": "1.13.1",
     "typescript": "5.9.3"
   },
-  "version": "0.7.3",
+  "version": "0.7.2",
   "description": "An Obsidian desktop plugin for note-grounded AI conversations, memory, and manual inline completion, powered by DeepSeek Harness.",
   "license": "MIT",
   "overrides": {

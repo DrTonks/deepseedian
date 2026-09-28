@@ -6,7 +6,7 @@
 
 **以当前 Git 仓库作为源码真源**：在含 `package.json`、`manifest.json`、`src/` 的仓库根目录运行命令。外层工作区可能存在历史开发副本、开发知识库和学习笔记，不要反向覆盖本仓库，也不要把这些个人资料加入发布包。本地开发笔记与公共 `docs/` 分开维护；公共文档说明架构、使用和验证，本地笔记记录个人学习过程。
 
-`dist/` 是构建输出；安装后的 `.obsidian/plugins/deepseedian/` 是部署目标，两者都不是源码。`node_modules/`、`.runs/`、`.preview/` 是依赖或验证产物，不要据此判断功能已发布，也不要上传运行时会话与凭据。
+`dist/` 是构建输出；安装后的 `.obsidian/plugins/deepsidian/` 是部署目标，两者都不是源码。`node_modules/`、`.runs/`、`.preview/` 是依赖或验证产物，不要据此判断功能已发布，也不要上传运行时会话与凭据。
 
 ## 三个执行边界
 
@@ -25,7 +25,6 @@ manifest.json                  Obsidian 插件入口元信息
 styles.css                     侧栏、历史弹窗、记忆窗口样式
 src/plugin/
   main.ts                      插件生命周期与协调器，优先阅读
-  legacy-migration.ts          首次启用新 ID 前导入旧设置、记忆、会话与附件；不覆盖冲突数据
   view.ts                      侧栏 DOM、输入、附件与流式显示
   history.ts                   会话历史弹窗、搜索、键盘交互
   commands.ts                  / 指令目录与解析
@@ -66,8 +65,8 @@ sequenceDiagram
     P->>R: snapshot → prepareRecall
     P->>P: 检查预算，再调用 accepted 清空草稿
     P->>C: connect → prompt
-    C->>B: deepseedian/prompt
-    B-->>C: deepseedian/tool
+    C->>B: deepsidian/prompt
+    B-->>C: deepsidian/tool
     C->>P: handleTool
     P-->>B: 工具结果，经 RPC 返回（写记忆需单独开启）
     B-->>C: stream + session.event

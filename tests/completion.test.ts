@@ -45,24 +45,6 @@ test('completion rejects repeated suffix punctuation and emphasis without rewrit
   assert.equal(normalizeCompletion('完成。接着收起',{prefix:'操作后',suffix:'。',title:''}),'完成。接着收起');
   assert.equal(normalizeCompletion('收起。',{prefix:'操作后',suffix:'\n下一段',title:''}),'收起。');
 });
-test('completion rejects unmatched duplicate emphasis closers without rejecting balanced or literal markers',()=>{
-  for(const marker of ['*','**','***','_','__','___']){
-    const doc=marker+'缓存可以'+marker;
-    const input=context(doc,marker.length+4);
-    assert.ok(input,doc);
-    assert.equal(normalizeCompletion('减少计算'+marker,input),null,doc);
-    assert.equal(normalizeCompletion('减少计算'+marker+'  ',input),null,doc);
-    assert.equal(normalizeCompletion('减少计算',input),'减少计算');
-    const balanced='说明 '+marker+'重点'+marker;
-    assert.equal(normalizeCompletion(balanced,input),balanced);
-    const code='保留 `'+marker+'`';
-    assert.equal(normalizeCompletion(code,input),code);
-  }
-  assert.equal(normalizeCompletion('保留 \\*',{prefix:'*正文',suffix:'*',title:''}),'保留 \\*');
-  // A nested single emphasis may close just before the outer strong delimiter.
-  assert.equal(normalizeCompletion('说明 *重点*',{prefix:'**正文',suffix:'**',title:''}),'说明 *重点*');
-});
-
 test('completion rejects joined ASCII words without inventing boundary spaces',()=>{
   const input={prefix:'The newest item is',suffix:' before older items.',title:'Queue'};
   assert.equal(normalizeCompletion('removed first',input),null);
