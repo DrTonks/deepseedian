@@ -118,11 +118,15 @@ test('0.1.5-rc.2 Chat Completions session resumes in current Messages runtime wi
   }
 });
 
-test('0.1.6 Messages history, tool results and fork boundaries survive runtime upgrade', {timeout:60000}, async t=>{
-  const env=discover(),previousRoot=process.env.DSH_PREVIOUS_PACKAGE_ROOT;
-  if(!previousRoot){t.skip('Needs DSH_PREVIOUS_PACKAGE_ROOT pointing to 0.1.6-alpha.2');return;}
+for(const fixture of [
+  {version:'0.1.6-alpha.2',variable:'DSH_PREVIOUS_PACKAGE_ROOT'},
+  {version:'0.1.7-rc.2',variable:'DSH_BASELINE_PACKAGE_ROOT'},
+]) {
+test(`${fixture.version} Messages history, tool results and fork boundaries survive runtime upgrade`, {timeout:60000}, async t=>{
+  const env=discover(),previousRoot=process.env[fixture.variable];
+  if(!previousRoot){t.skip(`Needs ${fixture.variable} pointing to ${fixture.version}`);return;}
   const previous=discover(previousRoot);
-  assert.equal(previous.versions.dsh,'0.1.6-alpha.2');
+  assert.equal(previous.versions.dsh,fixture.version);
   assert.ok(compareVersions(env.versions.dsh!,previous.versions.dsh!)>0,'Upgrade target must be newer than the previous runtime');
   mkdirSync('.runs',{recursive:true});const dir=mkdtempSync(resolve('.runs/messages-upgrade-'));
   const home=join(dir,'config');mkdirSync(home);writeFileSync(join(home,'settings.yaml'),'{}');
@@ -142,26 +146,50 @@ test('0.1.6 Messages history, tool results and fork boundaries survive runtime u
   let boundary=-1,toolCalls=0;
   const listen=(method:string,data:any)=>{if(method==='session.event'&&data.event.type==='turn/end')boundary=data.event.seq;};
   const tool=async(name:string)=>{assert.equal(name,'obsidian_context');toolCalls++;return {path:'synthetic.md',selection:'PRE-UPGRADE-CONTEXT'};};
-  let client=new DshClient(options,tool,listen);const parent=randomUUID(),child=randomUUID();
+  let client=new DshClient(options,tool,listen);const parent=randomUUID(),child=randomUUID(),existingChild=randomUUID();
   try{
     assert.equal((await client.prompt(parent,'PRE-UPGRADE-QUESTION')).kind,'completed');const forkAt=boundary;
-    assert.equal(toolCalls,1);await client.stop();
+    assert.equal(toolCalls,1);assert.ok(forkAt>=0,'Old runtime must emit a durable completed-turn boundary');
+    const beforeOldFork=requests.length;
+    await client.fork(parent,existingChild,forkAt);
+    assert.equal(requests.length,beforeOldFork,'Creating a branch in the old runtime makes no model request');
+    await client.stop();
     client=new DshClient({...options,packageRoot:env.root},tool,listen);
     assert.equal((await client.prompt(parent,'POST-UPGRADE-PARENT')).kind,'completed');
     const history=JSON.stringify(requests.at(-1).messages);
     for(const value of ['PRE-UPGRADE-QUESTION','PRE-UPGRADE-CONTEXT','MESSAGES-ANSWER','POST-UPGRADE-PARENT'])assert.ok(history.includes(value),value);
-    await client.fork(parent,child,forkAt);await client.stop();
+    assert.equal((await client.prompt(existingChild,'MIGRATED-EXISTING-BRANCH')).kind,'completed');
+    const existingHistory=JSON.stringify(requests.at(-1).messages);
+    for(const value of ['PRE-UPGRADE-QUESTION','PRE-UPGRADE-CONTEXT','MESSAGES-ANSWER','MIGRATED-EXISTING-BRANCH'])assert.ok(existingHistory.includes(value),value);
+    assert.doesNotMatch(existingHistory,/POST-UPGRADE-PARENT/);
+    const beforeNewFork=requests.length;
+    await client.fork(parent,child,forkAt);
+    assert.equal(requests.length,beforeNewFork,'Forking at a pre-upgrade boundary makes no model request');
+    await client.stop();
     client=new DshClient({...options,packageRoot:env.root},tool,listen);
     assert.equal((await client.prompt(child,'POST-UPGRADE-CHILD')).kind,'completed');
     const forkHistory=JSON.stringify(requests.at(-1).messages);
     for(const value of ['PRE-UPGRADE-QUESTION','PRE-UPGRADE-CONTEXT','MESSAGES-ANSWER','POST-UPGRADE-CHILD'])assert.ok(forkHistory.includes(value),value);
-    assert.doesNotMatch(forkHistory,/POST-UPGRADE-PARENT/);assert.deepEqual(errors,[]);
+    assert.doesNotMatch(forkHistory,/POST-UPGRADE-PARENT|MIGRATED-EXISTING-BRANCH/);
+    await client.stop();
+    client=new DshClient({...options,packageRoot:env.root},tool,listen);
+    assert.equal((await client.prompt(child,'CHILD-AFTER-SECOND-RESTART')).kind,'completed');
+    const restartedHistory=JSON.stringify(requests.at(-1).messages);
+    for(const value of ['PRE-UPGRADE-QUESTION','PRE-UPGRADE-CONTEXT','MESSAGES-ANSWER','POST-UPGRADE-CHILD'])assert.ok(restartedHistory.includes(value),value);
+    assert.doesNotMatch(restartedHistory,/POST-UPGRADE-PARENT|MIGRATED-EXISTING-BRANCH/);
+    assert.equal((await client.prompt(parent,'PARENT-AFTER-SECOND-RESTART')).kind,'completed');
+    const parentHistory=JSON.stringify(requests.at(-1).messages);
+    assert.match(parentHistory,/POST-UPGRADE-PARENT/);
+    assert.doesNotMatch(parentHistory,/POST-UPGRADE-CHILD|MIGRATED-EXISTING-BRANCH/);
+    assert.equal(toolCalls,1,'Persisted tool results must survive migration without re-executing the host tool');
+    assert.deepEqual(errors,[]);
   }finally{
     await client.stop();server.closeAllConnections();await new Promise<void>(r=>server.close(()=>r()));
     oldUrl===undefined?delete process.env.DEEPSEEK_BASE_URL:process.env.DEEPSEEK_BASE_URL=oldUrl;
     oldKey===undefined?delete process.env.DEEPSEEK_API_KEY:process.env.DEEPSEEK_API_KEY=oldKey;
   }
 });
+}
 
 test('custom provider configuration survives legacy settings and current profile patches', {timeout:60000}, async()=>{
   const {configuredModels,readProviderSettings}=await import('../src/plugin/dsh.ts');

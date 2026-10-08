@@ -83,7 +83,7 @@ export function runtimePatch(options: RuntimeOptions, providerConfiguration?:Pro
   const selectedAdapter=options.provider==='deepseek-official'?'llm-deepseek':'llm-pi-ai';
   if(disabled[selectedAdapter])throw Error(`DSH 配置禁用了所选供应商适配器 ${selectedAdapter}，请更换供应商或重新启用配置。`);
   if(!options.memoryOrganizer&&options.webSearch&&disabled['web-search-deepseek'])throw Error('DSH 配置禁用了 web-search-deepseek，请关闭网页搜索或重新启用配置。');
-  if(modern&&!disabled['llm-deepseek']&&Object.hasOwn(providerSettings['llm-deepseek']??{},'protocol'))throw Error('DSH 0.1.7 官方供应商只支持 Messages：请移除 llm-deepseek.protocol，并使用 Messages 兼容的 baseURL（官方为 https://api.deepseek.com/anthropic）。');
+  if(modern&&!disabled['llm-deepseek']&&Object.hasOwn(providerSettings['llm-deepseek']??{},'protocol'))throw Error('DSH 0.1.7 及更新版本的官方供应商只支持 Messages：请移除 llm-deepseek.protocol，并使用 Messages 兼容的 baseURL（官方为 https://api.deepseek.com/anthropic）。');
   const patch = [
     ...['persistent-bash', 'persistent-pwsh', 'terminal-bash', 'terminal-pwsh', 'pty', 'session-log-deepseek', 'plugin-package-inventory-deepseek'].map(id => ({ id, disabled: true })),
     ...(modern?[{id:'llm-deepseek',disabled:!!disabled['llm-deepseek'],config:providerSettings['llm-deepseek']??{}}]:[]),

@@ -111,6 +111,62 @@ test('real DSH bridge: tools, text stream, cancel, followup and process resume',
   }
 });
 
+test('real DSH returns host tool errors to the model and permits a successful followup', { timeout: 60000 }, async () => {
+  const env = discover();
+  mkdirSync('.runs', { recursive: true });
+  const dir = mkdtempSync(resolve('.runs', 'tool-error-runtime-'));
+  const home = join(dir, 'config'); mkdirSync(home); writeFileSync(join(home, 'settings.yaml'), '{}');
+  let turn = 0;
+  const requests: { turn: number; input: any }[] = [];
+  const server = createServer(async (req, res) => {
+    let body = ''; for await (const chunk of req) body += chunk;
+    if (req.url !== '/v1/messages') { res.writeHead(404); res.end(); return; }
+    const input = JSON.parse(body); requests.push({ turn, input });
+    // Each turn exercises the actual host bridge, including the turn after failure.
+    if (!currentToolResults(input.messages).length) {
+      messagesResponse(res, { tool: { id: `read-${turn}`, name: 'obsidian_read', input: { path: 'synthetic.md' } } });
+    } else { messagesResponse(res, { text: turn === 0 ? 'READ_FAILED_HANDLED' : 'FOLLOWUP_OK' }); }
+  });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  const oldUrl = process.env.DEEPSEEK_BASE_URL, oldKey = process.env.DEEPSEEK_API_KEY;
+  process.env.DEEPSEEK_BASE_URL = `http://127.0.0.1:${(server.address() as any).port}`;
+  process.env.DEEPSEEK_API_KEY = 'local-test-key';
+  const calls: { name: string; args: Record<string, unknown> }[] = [];
+  const streamed = ['', ''];
+  const client = new DshClient({ packageRoot: env.root, nodePath: env.node, dshHome: home, runtimeHome: join(dir, 'runtime'), bridgePath: resolve('src/plugin/bridge.mjs'), cwd: dir, provider: 'deepseek-official', model: 'deepseek-flash' }, async (name, args) => {
+    calls.push({ name, args });
+    if (turn === 0) throw Error('SYNTHETIC_NOTE_READ_FAILURE');
+    return { text: 'SYNTHETIC_NOTE_READ_SUCCESS' };
+  }, (method, data) => {
+    if (method === 'deepsidian.stream' && data.frame.chunk?.type === 'text-delta') streamed[turn] += data.frame.chunk.text;
+  });
+  try {
+    const session = randomUUID();
+    assert.equal((await client.prompt(session, 'Read the synthetic note; explain if it is unavailable.')).kind, 'completed');
+    turn = 1;
+    assert.equal((await client.prompt(session, 'Read the synthetic note again.')).kind, 'completed');
+    assert.deepEqual(requests.map(request => request.turn), [0, 0, 1, 1], 'a tool failure must not trigger duplicate calls or leave the session stuck');
+    assert.deepEqual(calls, [0, 1].map(() => ({ name: 'obsidian_read', args: { path: 'synthetic.md' } })));
+    const results = (input: any) => input.messages.flatMap((message: any) => Array.isArray(message.content) ? message.content : []).filter((block: any) => block.type === 'tool_result');
+    const failed = results(requests[1]!.input);
+    assert.equal(failed.length, 1);
+    assert.equal(failed[0].tool_use_id, 'read-0');
+    assert.equal(failed[0].is_error, true, 'the provider must receive a tool error, never a successful fabricated result');
+    assert.match(JSON.stringify(failed[0].content), /SYNTHETIC_NOTE_READ_FAILURE/);
+    const followup = results(requests[3]!.input);
+    assert.equal(followup.length, 2, 'the failed result remains in history beside the new successful result');
+    assert.equal(followup[0].is_error, true);
+    assert.equal(followup[1].tool_use_id, 'read-1');
+    assert.notEqual(followup[1].is_error, true);
+    assert.match(JSON.stringify(followup[1].content), /SYNTHETIC_NOTE_READ_SUCCESS/);
+    assert.deepEqual(streamed, ['READ_FAILED_HANDLED', 'FOLLOWUP_OK']);
+  } finally {
+    await client.stop(); server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve()));
+    oldUrl === undefined ? delete process.env.DEEPSEEK_BASE_URL : process.env.DEEPSEEK_BASE_URL = oldUrl;
+    oldKey === undefined ? delete process.env.DEEPSEEK_API_KEY : process.env.DEEPSEEK_API_KEY = oldKey;
+  }
+});
+
 test('cancel preparation immediately, suppress submission and allow the next prompt', { timeout: 15000 }, async () => {
   const env = discover();
   mkdirSync('.runs', { recursive: true });
