@@ -73,7 +73,15 @@ test('community three-file installation runs chat, restart and isolated organize
     await plugin.disconnect();
     assert.equal(await plugin.runMemoryModel('THREE-FILE-ORGANIZER', new AbortController().signal), 'THREE-FILE-PACKAGE-OK');
     assert.equal(requests.length, 3);
-    assert.ok(requests[0].tools.length > 0, 'foreground bridge exposes host tools');
+    const foregroundTools = [
+      'memory_read', 'memory_search', 'obsidian_base', 'obsidian_context',
+      'obsidian_metadata', 'obsidian_query', 'obsidian_read', 'obsidian_related',
+      'obsidian_resolve', 'obsidian_search',
+    ];
+    for (const request of requests.slice(0, 2)) {
+      assert.deepEqual(request.tools.map((tool: any) => tool.name).sort(), foregroundTools,
+        'foreground exposes exactly the enabled vault tools, including after restart');
+    }
     assert.equal(requests[2].tools?.length ?? 0, 0, 'organizer stays isolated without host tools');
     assert.equal((await readdir(pluginDir)).includes('bridge.mjs'), false);
   } finally {
