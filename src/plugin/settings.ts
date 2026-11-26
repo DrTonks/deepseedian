@@ -38,7 +38,7 @@ export class DeepsidianSettings extends PluginSettingTab {
     const idle=this.plugin.state.idleMemory;
     new Setting(memory).setName('闲时整理状态').setDesc(`${this.plugin.idleScheduler.running?'正在生成':idle?.pending?'有一批待审提案':'暂无待审提案'} · ${idle?.day??'尚未运行'}：${idle?.calls??0}/2次，${idle?.chars??0}/80000字符。${this.plugin.idleScheduler.error || idle?.lastError || ''}`).addButton(b=>b.setButtonText('查看提案').onClick(()=>this.plugin.openOrganizer()));
     new Setting(memory).setName('本库记忆').setDesc('跨会话读取、手动编辑、模型提案与人工确认；闲时生成可独立开启。').addButton(b=>b.setButtonText('管理记忆').onClick(()=>this.plugin.openMemory())).addButton(b=>b.setButtonText('编辑规则').onClick(()=>this.plugin.openMemory('rules'))).addButton(b=>b.setButtonText('查看或生成提案').onClick(()=>this.plugin.openOrganizer()));
-    for (const [key, title, desc] of [['webSearch', '网络搜索', 'DSH 原生 DeepSeek 搜索，会将查询发送到搜索供应商并产生额外模型请求；新安装默认开启。'], ['webFetch', '网页读取', 'DSH 原生匿名 HTTP 网页读取，仅允许公网 HTTP(S)，新安装默认开启。']] as const) {
+    for (const [key, title, desc] of [['webSearch', '网络搜索', 'DSH 原生 DeepSeek 搜索，会将查询发送到搜索供应商并产生额外模型请求；新安装默认开启。'], ['webFetch', '网页读取', '匿名读取可直连的公网 HTTP(S) 页面。需要代理解析的地址会被拒绝。新安装默认开启。']] as const) {
       new Setting(network).setName(title).setDesc(desc).addToggle(t => t.setValue(this.plugin.state.settings[key]).onChange(async value => {
         if (this.plugin.busy) { new Notice('请先结束当前回答'); t.setValue(this.plugin.state.settings[key]); return; }
         await this.plugin.disconnect(); this.plugin.state.settings[key] = value; await this.plugin.persist();

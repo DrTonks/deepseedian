@@ -8,7 +8,7 @@
 
 Deepseedian is a desktop Obsidian assistant powered by a locally installed [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) runtime. Ask questions with note context, inspect sources and citations, fork conversations, manage vault memory, generate local article catalogs and Bases, and request manual inline completion.
 
-Version **0.7.4** · [GitHub Releases](https://github.com/DrTonks/deepseedian/releases/tag/0.7.4) · [Community listing](https://community.obsidian.md/plugins/deepsidian). The interface is currently primarily Chinese; an English interface is not yet available.
+Version **0.7.5** · [GitHub Releases](https://github.com/DrTonks/deepseedian/releases/tag/0.7.5) · [Community listing](https://community.obsidian.md/plugins/deepsidian). The interface is currently primarily Chinese; an English interface is not yet available.
 
 ## Highlights
 
@@ -37,10 +37,10 @@ Click a screenshot for the full image. Follow the [feature walkthrough](docs/DEM
 
 > Available in Community plugins: search for **Deepseedian**, install, and enable it. The plugin ID remains `deepsidian`. Obsidian currently labels the entry as not manually reviewed by its staff. Manual installation from GitHub Releases is also supported.
 
-Requires **desktop Obsidian 1.13.7+**, **Node.js 24+**, and a local DSH installation. The currently verified DSH baseline is **0.2.1-rc.2**. Mobile devices are not supported. Install Node.js separately, then run:
+Requires **desktop Obsidian 1.13.7+**, **Node.js 24.9.0+**, and a local DSH installation. The currently verified DSH baseline is **0.2.2-rc.5**. Mobile devices are not supported. Install Node.js separately, then run:
 
 ```sh
-npm install -g @deepseek-ai/dsh@0.2.1-rc.2
+npm install -g @deepseek-ai/dsh@0.2.2-rc.5
 dsh web
 ```
 
@@ -60,7 +60,7 @@ On macOS, Obsidian launched from Finder may have a different PATH from your term
 - The plugin uses Node.js filesystem and child-process APIs to locate and run Node.js/DSH, read configuration and credentials from `~/.dsh` or a custom directory, and read explicitly attached external files. Chats, runtime logs, sent attachments, and memory are stored under the vault's plugin directory. No client-side telemetry is added. Remote services have their own data policies, including [DeepSeek's privacy policy](https://cdn.deepseek.com/policies/zh-CN/deepseek-privacy-policy.html).
 - Note properties such as `draft` or `encrypted` are not access controls. Completion exclusions do not restrict chat tools. Publishing or reviewing this plugin does not require uploading personal articles.
 
-See the [walkthrough](docs/DEMO.md) for note chat, context inspection, forks, catalogs, and manual completion. The [DSH 0.2.1 compatibility report](docs/DSH-0.2.1-VALIDATION.md) covers runtime migration, paid-provider tests, and macOS checks. The [0.7.2 acceptance report](docs/VALIDATION-0.7.2.md) covers numbered forks, upgrade persistence, and release verification.
+See the [walkthrough](docs/DEMO.md) for note chat, context inspection, forks, catalogs, and manual completion. Public webpage reads use direct, validated HTTP(S) connections. Pages that require proxy-side resolution are declined. Official DeepSeek routes may request the provider model catalog. The [DSH 0.2.2 compatibility report](docs/DSH-0.2.2-VALIDATION.md) covers runtime migration, paid-provider tests, and macOS checks. The [0.7.2 acceptance report](docs/VALIDATION-0.7.2.md) covers numbered forks, upgrade persistence, and release verification.
 
 AI suggestions can be incomplete or factually wrong. Read them before accepting; completion is not a fact-checking tool. The [0.7 validation report](docs/VALIDATION-0.7.0.md) records both successful and failed real-provider cases. Windows/Linux CI does not replace native UI testing, and third-party completion plugins, native input methods, and all themes have not been exhaustively tested. Runtime migration and three-file installation are covered by integration tests.
 
@@ -68,7 +68,7 @@ AI suggestions can be incomplete or factually wrong. Read them before accepting;
 
 The check command includes the official Obsidian ESLint rules. Existing general JavaScript/TypeScript findings remain visible warnings; Obsidian rules retain their recommended severity. TypeScript 5.9.3 is pinned for the linter’s compiler API compatibility. Local checks do not replace the directory scan.
 
-Use Node.js 24+ and run `npm ci`, `npm run check`, and `npm run test:integration` (requires DSH). Older-runtime migration fixtures are optional and are reported as skipped when absent. `npm run package:release` produces the three release assets. Live-provider test scripts incur charges and use synthetic fixtures by default; real-article testing requires authorization. Reports and credentials must not be committed.
+Use Node.js 24.9.0+ and run `npm ci`, `npm run check`, and `npm run test:integration` (requires DSH). Older-runtime migration fixtures are optional and are reported as skipped when absent. `npm run package:release` produces the three release assets. Live-provider test scripts incur charges and use synthetic fixtures by default; real-article testing requires authorization. Reports and credentials must not be committed.
 
 Source pushes alone do not deliver plugin updates. Increment the version, publish a matching Git tag and GitHub Release with the three assets, and check the community review results. See the [release guide](docs/COMMUNITY-RELEASE.md).
 

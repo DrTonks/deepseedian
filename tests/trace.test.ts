@@ -19,7 +19,8 @@ test('web tools are opt-in and independent', () => {
   const options = {packageRoot:'x',nodePath:'node',dshHome:'home',runtimeHome:'runtime',bridgePath:'bridge',cwd:'.',provider:'test',model:'test'};
   assert.doesNotMatch(JSON.stringify(runtimePatch(options)), /dsh-tool-web/);
   const enabled = JSON.stringify(runtimePatch({...options,webFetch:true}));
-  assert.match(enabled, /dsh-web-fetch-http/); assert.doesNotMatch(enabled,/dsh-web-search-deepseek/);
+  assert.match(enabled, /"search":false,"fetch":true/);
+  assert.doesNotMatch(enabled, /dsh-web-fetch-http|dsh-web-search-deepseek/);
 });
 
 test('long assistant replies retain usage after snapshot truncation and persistence', () => {

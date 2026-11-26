@@ -100,7 +100,6 @@ export function runtimePatch(options: RuntimeOptions, providerConfiguration?:Pro
       ...(!options.memoryOrganizer && (options.webSearch || options.webFetch) ? [
         { id: 'deepsidian-web', name: '@deepseek-ai/dsh-web' },
         ...(options.webSearch ? [{ id: 'deepsidian-web-search', name: '@deepseek-ai/dsh-web-search-deepseek', inject: modern?['web', 'credentials']:['web', 'credentials', 'settings'], ...(modern?{config:providerSettings['web-search-deepseek']??{}}:{}) }] : []),
-        ...(options.webFetch ? [{ id: 'deepsidian-web-fetch', name: '@deepseek-ai/dsh-web-fetch-http' }] : []),
         { id: 'deepsidian-web-tools', name: '@deepseek-ai/dsh-tool-web', config: { search: !!options.webSearch, fetch: !!options.webFetch, searchMaxResults: 5, searchMaxQueries: 2, fetchMaxOutputChars: 20000 } },
       ] : []),
       { id: 'deepsidian-bridge', name: options.bridgePath.replaceAll('\\', '/') },
@@ -151,7 +150,9 @@ export class DshClient {
     void ready.catch(() => {});
     const child = spawn(this.options.nodePath, [join(this.options.packageRoot, 'lib/bin.js'), '--profile', 'sdk-minimal', '--patch', patchPath], {
       cwd: this.options.cwd, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, DSH_HOME: this.options.runtimeHome, DEEPSIDIAN_DSH_PACKAGE: this.options.packageRoot, DEEPSIDIAN_ORGANIZER:this.options.memoryOrganizer?'1':'0', DEEPSIDIAN_MANAGE_MEMORY:this.options.manageMemory?'1':'0', DEEPSIDIAN_ROUTE: JSON.stringify({ provider: this.options.provider, model: this.options.model, maxTokens: this.options.maxTokens ?? 4096, reasoningEffort: this.options.reasoningEffort || undefined }), DSH_TELEMETRY_DISABLED: '1' },
+      env: { ...process.env, DSH_HOME: this.options.runtimeHome, DEEPSIDIAN_DSH_PACKAGE: this.options.packageRoot,
+        DEEPSIDIAN_WEB_FETCH: !this.options.memoryOrganizer && this.options.webFetch ? '1' : '0',
+        DEEPSIDIAN_ORGANIZER:this.options.memoryOrganizer?'1':'0', DEEPSIDIAN_MANAGE_MEMORY:this.options.manageMemory?'1':'0', DEEPSIDIAN_ROUTE: JSON.stringify({ provider: this.options.provider, model: this.options.model, maxTokens: this.options.maxTokens ?? 4096, reasoningEffort: this.options.reasoningEffort || undefined }), DSH_TELEMETRY_DISABLED: '1' },
     });
     this.child = child;
     this.closed = new Promise(resolve => child.once('close', () => resolve()));

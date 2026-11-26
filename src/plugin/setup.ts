@@ -15,7 +15,7 @@ export class SetupModal extends Modal {
       if (command) section.createEl('pre', { text: command });
       return section;
     };
-    step('1 · 安装 Node.js', '安装 Node.js 24 或更新版本，安装后重启 Obsidian。macOS 从 Finder 启动时可能无法读取终端 PATH；若自动检测失败，请填写下方绝对路径。').createEl('a', { text: 'Node.js 官方下载', href: 'https://nodejs.org/en/download' });
+    step('1 · 安装 Node.js', '安装 Node.js 24.9.0 或更新版本，安装后重启 Obsidian。macOS 从 Finder 启动时可能无法读取终端 PATH；若自动检测失败，请填写下方绝对路径。').createEl('a', { text: 'Node.js 官方下载', href: 'https://nodejs.org/en/download' });
     step('2 · 安装 DSH', `在系统终端执行以下命令。当前已验证 ${TESTED_DSH}；插件不会后台自动安装或升级。`, `npm install -g @deepseek-ai/dsh@${TESTED_DSH}`)
       .createEl('a', { text: 'DeepSeek Harness 官方安装说明', href: 'https://github.com/deepseek-ai/deepseek-harness' });
     step('3 · 配置模型', '在 DSH Web 页面完成供应商和模型设置，并在那里验证一次对话。配置完成后可以关闭 Web 服务，Deepseedian 会启动自己的轻量实例。', 'dsh web');

@@ -113,7 +113,7 @@ sequenceDiagram
 
 ## 验证命令
 
-在仓库根目录执行；需要 Node.js 24+。
+在仓库根目录执行；需要 Node.js 24.9.0+。
 
 ```sh
 npm ci

@@ -4,7 +4,7 @@
 
 Deepseedian 是面向桌面端 Obsidian 的 AI 助手，通过本机 [DeepSeek Harness（DSH）](https://github.com/deepseek-ai/deepseek-harness) 连接模型供应商，在笔记上下文中完成问答、来源检索与会话管理。
 
-当前版本为 **0.7.4**，更新 DSH 0.2.1-rc.2 兼容基线，修复新版默认工具进入记忆整理器的问题，补充分支迁移测试；保留 0.7.2 的分支会话编号。0.7.1 已修复 0.7.0 的社区审核阻断项，[社区条目已公开](https://community.obsidian.md/plugins/deepsidian)。评分卡仍显示部分警告，后续持续改进。界面当前以中文为主。
+当前版本为 **0.7.5**，适配 DSH 0.2.2-rc.5，并验证从 DSH 0.2.1 迁移会话与分支。0.7.1 已修复 0.7.0 的社区审核阻断项，[社区条目已公开](https://community.obsidian.md/plugins/deepsidian)。评分卡仍显示部分警告，后续持续改进。界面当前以中文为主。
 
 > 已上架社区插件市场：在“设置 → 第三方插件 → 浏览”中搜索 **Deepseedian**，安装并启用。插件 ID 保持 `deepsidian`；当前条目注明尚未经过 Obsidian 工作人员人工审核。也可使用下文的 GitHub Release 手动安装。
 
@@ -40,8 +40,8 @@ Deepseedian 是面向桌面端 Obsidian 的 AI 助手，通过本机 [DeepSeek H
 | 项目 | 当前要求 |
 | --- | --- |
 | Obsidian | 桌面版 1.13.7 或更新版本；不支持移动端 |
-| Node.js | 24 或更新版本，使用独立 Node.js 进程 |
-| DeepSeek Harness | 当前验证基线为 `0.2.1-rc.2` |
+| Node.js | 24.9.0 或更新版本，使用独立 Node.js 进程 |
+| DeepSeek Harness | 当前验证基线为 `0.2.2-rc.5` |
 | 模型服务 | 在 DSH 中配置可用的供应商和凭据；云端服务可能收费 |
 
 ### 1. 配置运行时
@@ -49,7 +49,7 @@ Deepseedian 是面向桌面端 Obsidian 的 AI 助手，通过本机 [DeepSeek H
 从 [Node.js 官网](https://nodejs.org/en/download) 安装 Node.js，然后在系统终端执行：
 
 ```sh
-npm install -g @deepseek-ai/dsh@0.2.1-rc.2
+npm install -g @deepseek-ai/dsh@0.2.2-rc.5
 dsh web
 ```
 
@@ -61,20 +61,20 @@ Deepseedian 依次读取 DSH 配置目录中的 `settings.yaml`、`profiles/sdk-
 
 ### 2. 安装插件
 
-从 [GitHub Release 0.7.4](https://github.com/DrTonks/deepseedian/releases/tag/0.7.4) 下载 `main.js`、`manifest.json` 和 `styles.css`，复制到笔记库的 `.obsidian/plugins/deepsidian/`。
+从 [GitHub Release 0.7.5](https://github.com/DrTonks/deepseedian/releases/tag/0.7.5) 下载 `main.js`、`manifest.json` 和 `styles.css`，复制到笔记库的 `.obsidian/plugins/deepsidian/`。
 
 也可以从源码构建同一版本：
 
 ```sh
 git clone https://github.com/DrTonks/deepseedian.git
 cd deepseedian
-git checkout 0.7.4
+git checkout 0.7.5
 npm ci
 npm run check
 npm run package:release
 ```
 
-将 `dist/release/0.7.4/` 中的三个文件复制到笔记库的 `.obsidian/plugins/deepsidian/`：
+将 `dist/release/0.7.5/` 中的三个文件复制到笔记库的 `.obsidian/plugins/deepsidian/`：
 
 ```text
 main.js
@@ -150,10 +150,10 @@ Base 提供动态视图，导航是扫描时的快照。后续更新只修改可
 | AI 对话与笔记工具 | 问题、相关会话历史、显式上下文、工具返回内容及启用的记忆进入所选模型请求 |
 | 会话提炼与闲时提案 | 允许贡献的用户消息、现有记忆及整理规则进入模型请求 |
 | 手动补全 | 当前标题及光标前后片段发送给官方 DeepSeek |
-| 网页搜索与读取 | 查询发送给配置的搜索服务；网页读取访问指定公网网站 |
+| 网页搜索与读取 | 查询发送给配置的搜索服务；网页读取使用经过地址校验的直连公网 HTTP(S)，拒绝需代理解析的目标 |
 | DSH 更新检查 | 默认每日最多查询 npm registry 的公开版本标签，不携带笔记或聊天，可关闭 |
 
-云端 AI 通常需要供应商账号和凭据，可能产生费用。聊天使用 DSH 中配置的供应商；搜索可能另有权限与费用。网络搜索和网页读取在新安装中默认开启，可分别关闭；启用工具不代表每次对话都会调用它们。
+官方 DeepSeek 路由可能请求供应商模型目录。云端 AI 通常需要供应商账号和凭据，可能产生费用。聊天使用 DSH 中配置的供应商；搜索可能另有权限与费用。网络搜索和网页读取在新安装中默认开启，可分别关闭；启用工具不代表每次对话都会调用它们。
 
 插件需在库外读取 Node.js/DSH 安装文件，以及 `~/.dsh` 或自定义目录中的供应商配置与凭据；主动附加的外部文件也会被读取。聊天、运行时日志、已发送附件和记忆保存在本库的 `.obsidian/plugins/deepsidian/` 内。插件不添加客户端遥测；运行时和远端服务的数据处理另受其政策约束，例如 [DeepSeek 隐私政策](https://cdn.deepseek.com/policies/zh-CN/deepseek-privacy-policy.html)。
 
@@ -165,10 +165,10 @@ Base 提供动态视图，导航是扫描时的快照。后续更新只修改可
 - 标题、普通段落块及一跳关联已实现；复杂列表/表格块、任意 Base 公式求值、向量检索尚不支持。部分查询最多扫描 2000 篇，属性与链接缓存可能短暂滞后。
 - 上下文清单记录宿主明确附带的来源，并非模型完整输入重放或精确费用估算。字符预算不覆盖全部历史及运行时内部重试。
 - 聊天与轨迹仍集中保存在 `data.json`，长历史性能、跨设备并发和完整日志清理尚待完善。
-- 本次发布前检查通过 160 项离线及 19 项运行时集成测试，包含旧历史迁移和标准三文件安装。本轮 macOS Obsidian 1.14.4 验证合成资料下的旧分支续聊、补全接受和撤销；此前 1.13.7 的连接、选区、来源跳转和真实博客 Base 日期检查见历史验收。
+- 本次发布前检查通过 160 项离线及 20 项运行时集成测试，包含旧历史迁移和标准三文件安装。本轮 macOS Obsidian 1.14.5 验证合成资料下的旧分支续聊、补全接受和撤销；此前 1.13.7 的连接、选区、来源跳转和真实博客 Base 日期检查见历史验收。
 - Windows/Linux 的 CI 与模拟组件测试不能替代原生界面验收；全新机器、真实中文输入法、其他补全插件、所有主题及真实付费搜索权限仍有未验证项。历史真实文章与合成补全测试保留了语义失败记录，不能以请求成功代表回答可靠。
 
-最新运行时升级、真实供应商测试与 macOS 检查见 [DSH 0.2.1 兼容验收](DSH-0.2.1-VALIDATION.md)。0.7.2 的分支编号与升级检查见 [版本验收](VALIDATION-0.7.2.md)。0.7.1 的首次启动、真实问答、分支恢复与目录生成见 [补丁验收记录](VALIDATION-0.7.1.md)。此前真实文章结果见 [0.7 验证记录](VALIDATION-0.7.0.md)。完整证据与边界见 [macOS 验收记录](MACOS-VALIDATION.md)、[真实供应商验证](LIVE-VALIDATION.md)及[研究路线图](RESEARCH-ROADMAP.md)。
+最新运行时升级、真实供应商测试与 macOS 检查见 [DSH 0.2.2 兼容验收](DSH-0.2.2-VALIDATION.md)。0.7.2 的分支编号与升级检查见 [版本验收](VALIDATION-0.7.2.md)。0.7.1 的首次启动、真实问答、分支恢复与目录生成见 [补丁验收记录](VALIDATION-0.7.1.md)。此前真实文章结果见 [0.7 验证记录](VALIDATION-0.7.0.md)。完整证据与边界见 [macOS 验收记录](MACOS-VALIDATION.md)、[真实供应商验证](LIVE-VALIDATION.md)及[研究路线图](RESEARCH-ROADMAP.md)。
 
 ## 开发与验证
 
@@ -181,7 +181,7 @@ npm run preview
 npm run package:release
 ```
 
-旧历史迁移验证需提供 `DSH_LEGACY_PACKAGE_ROOT`、`DSH_PREVIOUS_PACKAGE_ROOT`、`DSH_BASELINE_PACKAGE_ROOT` 与 `DSH_020_PACKAGE_ROOT`（分别对应 0.1.5-rc.2、0.1.6-alpha.2、0.1.7-rc.2、0.2.0-rc.2），缺少旧安装时会跳过相应场景。真实供应商脚本如 `live:selection`、`live:fork`、`live:manage`、`live:knowledge` 和 `live:completion` 使用合成资料并产生实际费用，不在默认测试或 CI 中运行。使用前配置自己的凭据，逐例核对完整回答；报告保存在忽略提交的 `.runs/`。
+旧历史迁移验证需提供 `DSH_LEGACY_PACKAGE_ROOT`、`DSH_PREVIOUS_PACKAGE_ROOT`、`DSH_BASELINE_PACKAGE_ROOT`、`DSH_020_PACKAGE_ROOT` 与 `DSH_021_PACKAGE_ROOT`（分别对应 0.1.5-rc.2、0.1.6-alpha.2、0.1.7-rc.2、0.2.0-rc.2、0.2.1-rc.2），缺少旧安装时会跳过相应场景。真实供应商脚本如 `live:selection`、`live:fork`、`live:manage`、`live:knowledge` 和 `live:completion` 使用合成资料并产生实际费用，不在默认测试或 CI 中运行。使用前配置自己的凭据，逐例核对完整回答；报告保存在忽略提交的 `.runs/`。
 
 架构和代码入口见 [项目地图](PROJECT-MAP.md)及[架构说明](ARCHITECTURE.md)。报告问题请使用 [GitHub Issues](https://github.com/DrTonks/deepseedian/issues)，附上插件/Obsidian/Node/DSH 版本、复现步骤及脱敏错误。
 

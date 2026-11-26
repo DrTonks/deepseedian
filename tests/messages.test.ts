@@ -122,6 +122,7 @@ for(const fixture of [
   {version:'0.1.6-alpha.2',variable:'DSH_PREVIOUS_PACKAGE_ROOT'},
   {version:'0.1.7-rc.2',variable:'DSH_BASELINE_PACKAGE_ROOT'},
   {version:'0.2.0-rc.2',variable:'DSH_020_PACKAGE_ROOT'},
+  {version:'0.2.1-rc.2',variable:'DSH_021_PACKAGE_ROOT'},
 ]) {
 test(`${fixture.version} Messages history, tool results and fork boundaries survive runtime upgrade`, {timeout:60000}, async t=>{
   const env=discover(),previousRoot=process.env[fixture.variable];

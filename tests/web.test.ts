@@ -12,6 +12,7 @@ test('native DSH web search returns citations; fetch blocks private destinations
   const env = discover(); mkdirSync('.runs',{recursive:true});
   const dir = mkdtempSync(resolve('.runs/web-test-')); const home = join(dir,'config'); mkdirSync(home);
   let searches = 0, calls = 0, fetchedPrivate = false;
+  let returnedResults: ReturnType<typeof toolResults> = [];
   const server = createServer(async (req,res) => {
     let body = ''; for await(const chunk of req) body += chunk;
     if (req.url === '/messages') {
@@ -23,11 +24,9 @@ test('native DSH web search returns citations; fetch blocks private destinations
     const input = JSON.parse(body); calls++;
     const names = input.tools.map((t:any)=>t.name);
     assert.ok(names.includes('web_search') && names.includes('web_fetch'));
-    const results = toolResults(input.messages);
-    if (results.length >= 1) assert.match(results[0].content,/https:\/\/example.com\/reference/);
-    if (results.length >= 2) assert.match(results[1].content,/blocked|public|private|loopback/i);
-    if(results.length===0)messagesResponse(res,{tool:{id:'search',name:'web_search',input:{queries:['synthetic test query']}}});
-    else if(results.length===1)messagesResponse(res,{tool:{id:'fetch',name:'web_fetch',input:{url:'http://127.0.0.1/private'}}});
+    returnedResults = toolResults(input.messages);
+    if(returnedResults.length===0)messagesResponse(res,{tool:{id:'search',name:'web_search',input:{queries:['synthetic test query']}}});
+    else if(returnedResults.length===1)messagesResponse(res,{tool:{id:'fetch',name:'web_fetch',input:{url:`${endpoint}/private`}}});
     else messagesResponse(res,{text:'Complete'});
   });
   server.listen(0,'127.0.0.1'); await once(server,'listening');
@@ -35,6 +34,13 @@ test('native DSH web search returns citations; fetch blocks private destinations
   writeFileSync(join(home,'settings.yaml'),JSON.stringify({'llm-deepseek':{baseURL:endpoint},'web-search-deepseek':{baseURL:endpoint}}));
   const oldKey = process.env.DEEPSEEK_API_KEY; process.env.DEEPSEEK_API_KEY='synthetic-test-key';
   const client = new DshClient({packageRoot:env.root,nodePath:env.node,dshHome:home,runtimeHome:join(dir,'runtime'),bridgePath:resolve('src/plugin/bridge.mjs'),cwd:resolve('fixtures'),provider:'deepseek-official',model:'deepseek-chat',webSearch:true,webFetch:true}, async()=>({}),()=>{});
-  try { assert.equal((await client.prompt(randomUUID(),'Test native web tools.')).kind,'completed'); assert.equal(searches,1); assert.equal(calls,3); assert.equal(fetchedPrivate,false); }
+  try {
+    assert.equal((await client.prompt(randomUUID(),'Test native web tools.')).kind,'completed');
+    assert.equal(searches,1);
+    assert.equal(calls,3);
+    assert.equal(fetchedPrivate,false,'the local HTTP server must not receive a webpage fetch');
+    assert.match(returnedResults[0]?.content ?? '',/https:\/\/example.com\/reference/);
+    assert.match(returnedResults[1]?.content ?? '',/blocked|non-public|公网地址/i);
+  }
   finally { await client.stop(); server.closeAllConnections(); await new Promise<void>(r=>server.close(()=>r())); oldKey === undefined ? delete process.env.DEEPSEEK_API_KEY : process.env.DEEPSEEK_API_KEY=oldKey; }
 });

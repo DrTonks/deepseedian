@@ -7,6 +7,7 @@ import { once } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import { DshClient, discover } from '../src/plugin/dsh.ts';
 import { reasoningText } from '../src/plugin/trace.ts';
+import { compareVersions } from '../src/plugin/versions.ts';
 import {messagesResponse, toolResults, currentToolResults} from './fixtures/messages.ts';
 test('real DSH bridge: tools, text stream, cancel, followup and process resume', { timeout: 60000 }, async () => {
   const env = discover();
@@ -61,15 +62,18 @@ test('real DSH bridge: tools, text stream, cancel, followup and process resume',
     assert.equal((await client.prompt(id,'AFTER-CANCEL')).kind,'completed');
     await client.stop(); resumeHistory = false;
     expectedModel = 'deepseek-flash'; expectedTokens = 2048;
-    client = new DshClient({...options, model: expectedModel, maxTokens: expectedTokens, reasoningEffort: 'high'}, async () => ({text:'test context'}), listener);
+    client = new DshClient({...options, model: expectedModel, maxTokens: expectedTokens, reasoningEffort: 'off'}, async () => ({text:'test context'}), listener);
     assert.equal((await client.prompt(id,'AFTER-RESTART')).kind,'completed');
     assert.equal(resumeHistory,true,'DSH must reload previous session messages after process restart');
+    assert.equal(lastInput.thinking?.type, 'disabled', 'the resumed route must apply the explicitly selected reasoning effort');
     assert.equal((await client.prompt(id,'Inspect the attached synthetic pixel.', [{name:'pixel.png', mimeType:'image/png',data:'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEElEQVR4nGP4z8AARAwQCgAf7gP9i18U1AAAAABJRU5ErkJggg=='}])).kind,'completed');
     assert.equal(sawImage, true, 'image must reach the provider request as image content');
     await client.stop(); sawImage = false;
-    client = new DshClient({...options, model: expectedModel, maxTokens: expectedTokens}, async () => ({text:'test context'}), listener);
+    const hasModelSelection = compareVersions(env.versions.dsh!, '0.2.2-rc.5') >= 0;
+    client = new DshClient({...options, model: expectedModel, maxTokens: expectedTokens, reasoningEffort: hasModelSelection ? '' : 'high'}, async () => ({text:'test context'}), listener);
     assert.equal((await client.prompt(id,'Continue after image restart.')).kind,'completed');
     assert.equal(sawImage, true, 'durable image must survive runtime restart');
+    assert.equal(lastInput.thinking?.type, 'enabled', 'the same model must restore the default effort after an explicit off setting');
     const boundary = endSeq, child = randomUUID(), grandchild = randomUUID();
     await client.prompt(id, 'PARENT-ONLY-LATER');
     const beforeFork = requests;

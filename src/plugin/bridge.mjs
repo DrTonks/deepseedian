@@ -4,13 +4,16 @@ import { pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { completionBridge } from './completion/bridge.mjs';
+import { createPublicFetchProvider } from './web/public-fetch.mjs';
 const req = createRequire(join(process.env.DEEPSIDIAN_DSH_PACKAGE, 'package.json'));
 const { defineTool } = await import(pathToFileURL(req.resolve('@deepseek-ai/dsh-tools')).href);
 const { createUserMessage } = await import(pathToFileURL(req.resolve('@deepseek-ai/dsh-llm')).href);
 const { admitEncodedImages } = await import(pathToFileURL(req.resolve('@deepseek-ai/dsh-attachment')).href);
 export const name = 'deepsidian-bridge';
-export const inject = ['tools', 'agents', 'sessionPersistence', 'llm', 'attachments'];
+const publicFetchEnabled = process.env.DEEPSIDIAN_WEB_FETCH === '1';
+export const inject = ['tools', 'agents', 'sessionPersistence', 'llm', 'attachments', ...(publicFetchEnabled ? ['web'] : [])];
 export function apply(ctx) {
+  if (publicFetchEnabled) ctx.web.registerFetchProvider(createPublicFetchProvider(req));
   let seq = 0;
   let forking = false;
   const pending = new Map();
@@ -108,6 +111,16 @@ export function apply(ctx) {
         }
         checkCancelled();
         const message = createUserMessage({ content: [{ type: 'text', text }, ...refs.map(attachment => ({ type: 'image', attachment }))], source: { kind: 'user' } });
+        // DSH 0.2.2 restores model selection from the session log before using
+        // agentOptions. Apply the current UI route before the next turn.
+        const modelSelection = handle.agent.model;
+        if (modelSelection) {
+          const current = modelSelection.current();
+          const { provider, model, reasoningEffort } = route;
+          if (current?.provider !== provider || current.model !== model || current.reasoningEffort !== reasoningEffort) {
+            modelSelection.select({ provider, model, reasoningEffort });
+          }
+        }
         handle.agent.followup(message);
         return { messageId: message.id };
       };
